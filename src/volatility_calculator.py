@@ -18,6 +18,7 @@ class VolatilityResult:
     change_pct: float   # 涨跌幅(%)
     volatility: float   # 波动率
     weight: float       # 权重
+    month_return_pct: float  # 近一月涨跌幅(%)
     
     def __str__(self) -> str:
         return (f"{self.name}({self.symbol}): "
@@ -115,13 +116,15 @@ class VolatilityCalculator:
                 previous_price=0,
                 change_pct=0,
                 volatility=0,
-                weight=weight
+                weight=weight,
+                month_return_pct=0
             )
         
         current_price = float(df.iloc[-1]['收盘'])
         previous_price = float(df.iloc[-2]['收盘'])
         change_pct = VolatilityCalculator.calculate_daily_return(current_price, previous_price)
         volatility = VolatilityCalculator.calculate_volatility(df['收盘'])
+        month_return_pct = VolatilityCalculator.calculate_month_return(df['收盘'])
         
         return VolatilityResult(
             symbol=symbol,
@@ -130,8 +133,31 @@ class VolatilityCalculator:
             previous_price=previous_price,
             change_pct=change_pct,
             volatility=volatility,
-            weight=weight
+            weight=weight,
+            month_return_pct=month_return_pct
         )
+
+    @staticmethod
+    def calculate_month_return(prices: pd.Series, window: int = 21) -> float:
+        """
+        计算近一月涨跌幅（默认 21 个交易日）
+
+        Args:
+            prices: 价格序列
+            window: 交易日窗口
+
+        Returns:
+            近一月涨跌幅(百分比)
+        """
+        if len(prices) < 2:
+            return 0.0
+
+        current = float(prices.iloc[-1])
+        base_index = -window - 1 if len(prices) > window else 0
+        base = float(prices.iloc[base_index])
+        if base == 0:
+            return 0.0
+        return ((current - base) / base) * 100
     
     @staticmethod
     def calculate_portfolio_volatility(

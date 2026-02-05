@@ -78,7 +78,6 @@ class AntiFOMO:
                 weight=weights[holding.symbol]
             )
             individual_results.append(result)
-            print(f"    ✓ 当前价: {result.current_price:.2f}, 涨跌: {result.change_pct:+.2f}%")
         
         if not individual_results:
             print("❌ 无有效数据，检查终止")
@@ -94,6 +93,13 @@ class AntiFOMO:
         print("🔍 评估波动阈值...")
         alert_result = self.threshold_manager.evaluate(portfolio_result)
         
+        if alert_result.should_notify:
+            print("\n📌 波动明细（仅在触发阈值时展示）:")
+            for result in individual_results:
+                print(f"  - {result.name}({result.symbol}) 当前价: {result.current_price:.2f}, 涨跌: {result.change_pct:+.2f}%")
+        else:
+            print("\n✅ 波动正常，建议把注意力放回生活与长期计划。")
+
         # 4. AI 分析（如果启用）
         ai_analysis = None
         if self.ai_analyzer.enabled and (alert_result.should_notify or self.ai_always_analyze):

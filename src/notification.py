@@ -71,11 +71,20 @@ class NotificationManager:
             "",
             str(alert_result),
             "",
-            "组合波动详情:",
-            "-" * 60,
-            str(portfolio_result),
-            ""
         ]
+
+        if alert_result.should_notify:
+            lines.extend([
+                "组合波动详情:",
+                "-" * 60,
+                str(portfolio_result),
+                ""
+            ])
+        else:
+            lines.extend([
+                "组合波动：正常范围，无需关注明细",
+                ""
+            ])
         
         if ai_analysis:
             lines.extend([

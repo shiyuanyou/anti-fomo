@@ -62,12 +62,20 @@ class AIAnalyzer:
         # 准备数据
         volatility_details = self._format_volatility_details(portfolio_result)
         recent_trend = self._analyze_trend(portfolio_result)
+        allocation_summary = self._format_allocation_summary(portfolio_result)
+        month_return_summary = self._format_month_return_summary(portfolio_result)
+        rebalance_hint = self._format_rebalance_hint(portfolio_result)
+        alert_level = alert_result.level.value
         
         # 构建提示词
         prompt = self.prompt_template.format(
+            alert_level=alert_level,
             total_volatility=f"{portfolio_result.total_volatility:.2f}",
             volatility_details=volatility_details,
-            recent_trend=recent_trend
+            recent_trend=recent_trend,
+            allocation_summary=allocation_summary,
+            month_return_summary=month_return_summary,
+            rebalance_hint=rebalance_hint,
         )
         
         try:
@@ -108,6 +116,39 @@ class AIAnalyzer:
                 f"权重 {result.weight:.1%}"
             )
         return "\n".join(lines)
+
+    def _format_allocation_summary(self, portfolio_result: PortfolioVolatilityResult) -> str:
+        """格式化持仓权重"""
+        lines = []
+        for result in portfolio_result.individual_results:
+            lines.append(f"- {result.name}({result.symbol}): 权重 {result.weight:.1%}")
+        return "\n".join(lines)
+
+    def _format_month_return_summary(self, portfolio_result: PortfolioVolatilityResult) -> str:
+        """格式化近一月涨跌幅"""
+        lines = []
+        for result in portfolio_result.individual_results:
+            lines.append(
+                f"- {result.name}({result.symbol}): 近一月 {result.month_return_pct:+.2f}%"
+            )
+        return "\n".join(lines)
+
+    def _format_rebalance_hint(self, portfolio_result: PortfolioVolatilityResult) -> str:
+        """生成调仓提示"""
+        results = sorted(
+            portfolio_result.individual_results,
+            key=lambda x: x.month_return_pct,
+            reverse=True,
+        )
+        if len(results) < 2:
+            return ""
+
+        top = results[0]
+        bottom = results[-1]
+        return (
+            f"近一月上涨较多: {top.name}({top.symbol}) {top.month_return_pct:+.2f}%; "
+            f"相对落后: {bottom.name}({bottom.symbol}) {bottom.month_return_pct:+.2f}%"
+        )
     
     def _analyze_trend(self, portfolio_result: PortfolioVolatilityResult) -> str:
         """分析趋势（简化版）"""
