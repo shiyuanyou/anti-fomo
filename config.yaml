@@ -1,0 +1,92 @@
+# 股票组合配置
+portfolio:
+  # 示例配置，支持指数和个股
+  holdings:
+    - symbol: "000510"  # 中证A500
+      name: "中证A500"
+      type: "index"
+      allocation_type: "amount"  # amount(金额) 或 ratio(比例)
+      value: 50000  # 如果是amount则为金额，如果是ratio则为百分比(0-100)
+    
+    - symbol: "930050"  # 中证A50
+      name: "中证A50"
+      type: "index"
+      allocation_type: "ratio"
+      value: 30  # 30%
+    
+    - symbol: "932000"  # 中证2000
+      name: "中证2000"
+      type: "index"
+      allocation_type: "ratio"
+      value: 20  # 20%
+
+# 波动率阈值配置
+thresholds:
+  # 总体组合波动阈值（百分比）
+  portfolio_volatility:
+    warning: 3.0   # 警告阈值：日波动超过3%
+    alert: 5.0     # 警报阈值：日波动超过5%
+  
+  # 单个持仓波动阈值（百分比）
+  individual_volatility:
+    warning: 5.0   # 警告阈值：单个持仓日波动超过5%
+    alert: 8.0     # 警报阈值：单个持仓日波动超过8%
+  
+  # 连续波动天数阈值
+  consecutive_days:
+    warning: 3     # 连续3天波动
+    alert: 5       # 连续5天波动
+
+# AI 分析配置
+ai_analysis:
+  enabled: true
+  provider: "openai"  # 可选: openai, anthropic
+  model: "gpt-4"
+  api_key: ""  # 请填入您的API密钥
+  
+  # AI 分析提示词模板
+  prompt_template: |
+    作为一位专业的投资顾问，请分析以下股票组合的波动情况：
+    
+    组合总波动：{total_volatility}%
+    波动明细：
+    {volatility_details}
+    
+    近期趋势：
+    {recent_trend}
+    
+    请根据以上数据，从以下角度分析：
+    1. 当前波动是否属于正常市场波动？
+    2. 是否需要立即关注或采取行动？
+    3. 给出具体的建议（持有、观察、调仓等）
+    
+    请用简洁专业的语言回答，避免引起投资者不必要的焦虑。
+
+# 数据获取配置
+data_fetch:
+  period: "daily"  # daily, weekly
+  start_date: "20240101"
+  end_date: null  # null表示当前日期
+
+# 通知配置
+notification:
+  enabled: true
+  methods:
+    - type: "console"  # 控制台输出
+    - type: "email"    # 邮件通知（需配置）
+      smtp_host: ""
+      smtp_port: 587
+      sender: ""
+      receiver: ""
+      password: ""
+    - type: "file"     # 文件记录
+      log_path: "./logs/alerts.log"
+
+# 调度配置
+scheduler:
+  # 每个交易日收盘后运行（15:30）
+  check_time: "15:30"
+  timezone: "Asia/Shanghai"
+  # 是否在非交易日也检查
+  skip_weekends: true
+  skip_holidays: true
