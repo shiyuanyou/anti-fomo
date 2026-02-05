@@ -44,6 +44,7 @@ ai_analysis:
   enabled: false  # 改为 true 并填入 API key 以启用
   provider: "openai"
   model: "gpt-4"
+  base_url: ""  # OpenAI 兼容地址，如 https://api.openai.com/v1
   api_key: ""  # 在这里填入您的 OpenAI API Key
   
   prompt_template: |

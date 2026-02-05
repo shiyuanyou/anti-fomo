@@ -25,10 +25,14 @@ class AIAnalyzer:
         self.provider = config.get('provider', 'openai')
         self.model = config.get('model', 'gpt-4')
         self.api_key = config.get('api_key', '')
+        self.base_url = config.get('base_url', '')
         self.prompt_template = config.get('prompt_template', '')
-        
+
         if self.api_key:
-            self.client = OpenAI(api_key=self.api_key)
+            if self.base_url:
+                self.client = OpenAI(api_key=self.api_key, base_url=self.base_url)
+            else:
+                self.client = OpenAI(api_key=self.api_key)
         else:
             self.client = None
             print("警告: 未配置 API Key，AI 分析功能将不可用")
