@@ -99,6 +99,14 @@ ai_analysis:
 python run.py
 ```
 
+### 资产配置向导（生成初始配置）
+
+```bash
+python run.py configure
+```
+
+会生成 `config.asset.yaml`，包含分类结构、比例、可计算资产权重与起始价格。
+
 ### 定时调度（每日自动运行）
 
 ```bash
