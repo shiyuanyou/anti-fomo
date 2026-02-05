@@ -27,6 +27,7 @@ class AntiFOMO:
         """
         # 加载配置
         self.config = self._load_config(config_path)
+        self.asset_allocation = self.config.get("asset_allocation", {})
         
         # 初始化各个模块
         self.portfolio = Portfolio.from_config(self.config)
@@ -46,11 +47,25 @@ class AntiFOMO:
         
         print("✅ Anti-FOMO 系统初始化完成")
         print(f"📊 监控组合: {len(self.portfolio.holdings)} 个持仓")
+        if self.asset_allocation:
+            print("🧭 已加载资产配置起始文件")
     
     def _load_config(self, config_path: str) -> Dict:
         """加载配置文件"""
         with open(config_path, 'r', encoding='utf-8') as f:
-            return yaml.safe_load(f)
+            config = yaml.safe_load(f)
+
+        asset_config_path = config.get("asset_config_path", "config.asset.yaml")
+        asset_path = Path(asset_config_path)
+        if asset_path.exists():
+            with open(asset_path, "r", encoding="utf-8") as f:
+                asset_config = yaml.safe_load(f)
+            if asset_config.get("portfolio", {}).get("holdings"):
+                config["portfolio"] = asset_config["portfolio"]
+            if asset_config.get("asset_allocation"):
+                config["asset_allocation"] = asset_config["asset_allocation"]
+
+        return config
     
     def run_check(self):
         """执行一次波动检查"""
@@ -92,6 +107,9 @@ class AntiFOMO:
         # 3. 评估阈值
         print("🔍 评估波动阈值...")
         alert_result = self.threshold_manager.evaluate(portfolio_result)
+
+        if self.asset_allocation:
+            self._print_allocation_summary()
         
         if alert_result.should_notify:
             print("\n📌 波动明细（仅在触发阈值时展示）:")
@@ -138,6 +156,29 @@ class AntiFOMO:
                 time.sleep(60)  # 每分钟检查一次
         except KeyboardInterrupt:
             print("\n\n👋 调度器已停止")
+
+    def _print_allocation_summary(self):
+        """输出资产配置概览"""
+        total_ratio = self.asset_allocation.get("total_ratio")
+        calculable_ratio = self.asset_allocation.get("calculable_ratio")
+        calculable_weights = self.asset_allocation.get("calculable_weights", {})
+        equity_start = self.asset_allocation.get("equity_start", {})
+
+        print("\n🧭 资产配置概览")
+        if total_ratio is not None:
+            print(f"  - 配置总比例: {total_ratio:.2f}%")
+        if calculable_ratio is not None:
+            print(f"  - 可计算比例: {calculable_ratio:.2f}%")
+
+        if calculable_weights:
+            print("  - 可计算资产权重:")
+            for symbol, weight in calculable_weights.items():
+                print(f"    * {symbol}: {weight:.2%}")
+
+        if equity_start:
+            print("  - 起始价格/成本:")
+            for symbol, price in equity_start.items():
+                print(f"    * {symbol}: {price}")
 
 
 def main():

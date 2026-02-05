@@ -78,6 +78,9 @@ data_fetch:
   start_date: "20240101"
   end_date: null  # null表示当前日期
 
+# 资产配置文件路径（由配置向导生成）
+asset_config_path: "config.asset.yaml"
+
 # 通知配置
 notification:
   enabled: true

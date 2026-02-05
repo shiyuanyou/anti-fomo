@@ -106,6 +106,7 @@ python run.py configure
 ```
 
 会生成 `config.asset.yaml`，包含分类结构、比例、可计算资产权重与起始价格。
+主程序会自动读取 `asset_config_path` 指向的配置文件。
 
 ### 定时调度（每日自动运行）
 
