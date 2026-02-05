@@ -85,7 +85,8 @@ class Portfolio:
             
             # 如果有比例配置但没有金额配置，则无法计算总金额
             if ratio_sum > 0 and amount_sum == 0:
-                raise ValueError("无法计算总金额：只有比例配置，没有金额配置")
+                self._total_amount = 1.0
+                return self._total_amount
             
             # 总金额 = 明确金额 / (1 - 总比例)
             if ratio_sum < 100:
@@ -97,9 +98,28 @@ class Portfolio:
     
     def get_holding_weights(self) -> Dict[str, float]:
         """获取所有持仓权重"""
+        if not self.holdings:
+            return {}
+
+        ratio_sum = sum(
+            h.value for h in self.holdings
+            if h.allocation_type == AllocationType.RATIO
+        )
+        amount_sum = sum(
+            h.value for h in self.holdings
+            if h.allocation_type == AllocationType.AMOUNT
+        )
+
+        # 只有比例时，按比例归一化
+        if ratio_sum > 0 and amount_sum == 0:
+            return {
+                h.symbol: (h.value / ratio_sum)
+                for h in self.holdings
+            }
+
         total = self.get_total_amount()
         return {
-            h.symbol: h.get_weight(total) 
+            h.symbol: h.get_weight(total)
             for h in self.holdings
         }
     
