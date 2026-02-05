@@ -26,6 +26,8 @@ portfolio:
 
 在 `config.yaml` 中修改 `prompt_template`，可以调整 AI 分析的角度和风格。
 
+如果你使用 OpenAI 兼容接口，建议配置 `base_url` 并使用环境变量提供密钥。
+
 ## 添加其他数据源
 
 扩展 `src/data_fetcher.py`，添加新的数据获取方法：

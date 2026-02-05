@@ -59,7 +59,8 @@ python run.py
 ```yaml
 ai_analysis:
   enabled: true
-  api_key: "sk-..."  # 填入您的 API Key
+  api_key: ""  # 建议留空，使用环境变量 OPENAI_API_KEY
+  base_url: ""  # OpenAI 兼容地址，如 https://api.openai.com/v1
 ```
 
 2. 重新运行即可看到 AI 分析建议

@@ -2,8 +2,10 @@
 AI Analysis Module
 AI 分析模块 - 使用 AI 分析波动情况并给出建议
 """
+import os
 from typing import Dict, Optional
 from openai import OpenAI
+from dotenv import load_dotenv
 from volatility_calculator import PortfolioVolatilityResult
 from threshold_manager import AlertResult
 
@@ -21,11 +23,13 @@ class AIAnalyzer:
         self.enabled = config.get('enabled', False)
         if not self.enabled:
             return
+
+        load_dotenv()
         
         self.provider = config.get('provider', 'openai')
         self.model = config.get('model', 'gpt-4')
-        self.api_key = config.get('api_key', '')
-        self.base_url = config.get('base_url', '')
+        self.api_key = config.get('api_key') or os.getenv('OPENAI_API_KEY') or os.getenv('AI_API_KEY') or ''
+        self.base_url = config.get('base_url') or os.getenv('OPENAI_BASE_URL') or ''
         self.prompt_template = config.get('prompt_template', '')
 
         if self.api_key:
@@ -84,7 +88,10 @@ class AIAnalyzer:
                 max_tokens=800
             )
             
-            return response.choices[0].message.content
+            content = response.choices[0].message.content
+            if content:
+                print("\nAI 分析建议:\n" + content + "\n")
+            return content
         
         except Exception as e:
             print(f"AI 分析失败: {str(e)}")

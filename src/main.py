@@ -37,7 +37,9 @@ class AntiFOMO:
         self.threshold_manager = ThresholdManager(
             ThresholdConfig.from_config(self.config)
         )
-        self.ai_analyzer = AIAnalyzer(self.config.get('ai_analysis', {}))
+        self.ai_config = self.config.get('ai_analysis', {})
+        self.ai_analyzer = AIAnalyzer(self.ai_config)
+        self.ai_always_analyze = bool(self.ai_config.get('always_analyze', False))
         self.notification_manager = NotificationManager(
             self.config.get('notification', {})
         )
@@ -94,7 +96,7 @@ class AntiFOMO:
         
         # 4. AI 分析（如果启用）
         ai_analysis = None
-        if alert_result.should_notify and self.ai_analyzer.enabled:
+        if self.ai_analyzer.enabled and (alert_result.should_notify or self.ai_always_analyze):
             print("🤖 正在进行 AI 分析...")
             ai_analysis = self.ai_analyzer.analyze(portfolio_result, alert_result)
         

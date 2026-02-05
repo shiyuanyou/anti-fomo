@@ -86,7 +86,9 @@ ai_analysis:
   enabled: true
   provider: "openai"
   model: "gpt-4"
-  api_key: "your-api-key-here"  # 填入您的 OpenAI API Key
+  base_url: ""  # OpenAI 兼容地址，如 https://api.openai.com/v1
+  api_key: ""  # 建议留空，使用环境变量 OPENAI_API_KEY
+  always_analyze: false  # true 时即使未触发警报也会输出 AI 分析
 ```
 
 ## 使用方法
