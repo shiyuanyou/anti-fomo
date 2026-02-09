@@ -1,0 +1,73 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/29.3.6 Chrome/140.0.7339.249 Electron/38.8.0 Safari/537.36" version="29.3.6">
+  <diagram name="第 1 页" id="ItI1_BTTYx23-Jh7B0ey">
+    <mxGraphModel dx="778" dy="580" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="--iBKiMR6LApRP3swMSw-1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="" vertex="1">
+          <mxGeometry height="430" width="560" x="120" y="90" as="geometry" />
+        </mxCell>
+        <mxCell id="--iBKiMR6LApRP3swMSw-4" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="" vertex="1">
+          <mxGeometry height="430" width="190" x="120" y="90" as="geometry" />
+        </mxCell>
+        <mxCell id="--iBKiMR6LApRP3swMSw-6" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="输入区" vertex="1">
+          <mxGeometry height="30" width="60" x="185" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="--iBKiMR6LApRP3swMSw-8" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="展示区" vertex="1">
+          <mxGeometry height="30" width="60" x="470" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="--iBKiMR6LApRP3swMSw-14" edge="1" parent="1" style="endArrow=none;html=1;rounded=0;" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="120" y="140" as="sourcePoint" />
+            <mxPoint x="310" y="140" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="--iBKiMR6LApRP3swMSw-15" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="资产名" vertex="1">
+          <mxGeometry height="30" width="60" x="130" y="150" as="geometry" />
+        </mxCell>
+        <mxCell id="--iBKiMR6LApRP3swMSw-16" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="金额" vertex="1">
+          <mxGeometry height="30" width="60" x="130" y="180" as="geometry" />
+        </mxCell>
+        <mxCell id="--iBKiMR6LApRP3swMSw-17" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="股票代码" vertex="1">
+          <mxGeometry height="30" width="60" x="130" y="220" as="geometry" />
+        </mxCell>
+        <mxCell id="--iBKiMR6LApRP3swMSw-18" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="风格" vertex="1">
+          <mxGeometry height="30" width="60" x="130" y="250" as="geometry" />
+        </mxCell>
+        <mxCell id="--iBKiMR6LApRP3swMSw-19" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="国别" vertex="1">
+          <mxGeometry height="30" width="60" x="130" y="280" as="geometry" />
+        </mxCell>
+        <mxCell id="--iBKiMR6LApRP3swMSw-20" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="类型" vertex="1">
+          <mxGeometry height="30" width="60" x="130" y="310" as="geometry" />
+        </mxCell>
+        <mxCell id="--iBKiMR6LApRP3swMSw-21" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="" vertex="1">
+          <mxGeometry height="95" width="110" x="405.5" y="165" as="geometry" />
+        </mxCell>
+        <mxCell id="--iBKiMR6LApRP3swMSw-22" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="" vertex="1">
+          <mxGeometry height="55" width="80" x="515.5" y="165" as="geometry" />
+        </mxCell>
+        <mxCell id="--iBKiMR6LApRP3swMSw-23" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="" vertex="1">
+          <mxGeometry height="40" width="50" x="515.5" y="220" as="geometry" />
+        </mxCell>
+        <mxCell id="--iBKiMR6LApRP3swMSw-24" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="" vertex="1">
+          <mxGeometry height="40" width="30" x="565.5" y="220" as="geometry" />
+        </mxCell>
+        <mxCell id="--iBKiMR6LApRP3swMSw-25" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="" vertex="1">
+          <mxGeometry height="80" width="191" x="404.5" y="260" as="geometry" />
+        </mxCell>
+        <mxCell id="--iBKiMR6LApRP3swMSw-26" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="" vertex="1">
+          <mxGeometry height="60" width="213" x="390" y="410" as="geometry" />
+        </mxCell>
+        <mxCell id="--iBKiMR6LApRP3swMSw-27" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="区域" vertex="1">
+          <mxGeometry height="60" width="73" x="390" y="410" as="geometry" />
+        </mxCell>
+        <mxCell id="--iBKiMR6LApRP3swMSw-28" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="风格" vertex="1">
+          <mxGeometry height="60" width="73" x="463" y="410" as="geometry" />
+        </mxCell>
+        <mxCell id="--iBKiMR6LApRP3swMSw-29" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="类型" vertex="1">
+          <mxGeometry height="60" width="73" x="537" y="410" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
