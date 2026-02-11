@@ -4,10 +4,12 @@ AI 分析模块 - 使用 AI 分析波动情况并给出建议
 """
 import os
 from typing import Dict, Optional
+
 from openai import OpenAI
 from dotenv import load_dotenv
-from volatility_calculator import PortfolioVolatilityResult
-from threshold_manager import AlertResult
+
+from portfolio_engine import PortfolioVolatilityResult
+from portfolio_engine import AlertResult
 
 
 class AIAnalyzer:
@@ -152,7 +154,6 @@ class AIAnalyzer:
     
     def _analyze_trend(self, portfolio_result: PortfolioVolatilityResult) -> str:
         """分析趋势（简化版）"""
-        # 统计上涨和下跌的持仓
         up_count = sum(1 for r in portfolio_result.individual_results if r.change_pct > 0)
         down_count = sum(1 for r in portfolio_result.individual_results if r.change_pct < 0)
         total = len(portfolio_result.individual_results)

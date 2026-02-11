@@ -40,9 +40,6 @@ class DataFetcher:
         """
         if end_date is None:
             end_date = datetime.now().strftime("%Y%m%d")
-        
-        if end_date is None:
-            end_date = datetime.now().strftime("%Y%m%d")
 
         errors = []
 
@@ -114,11 +111,7 @@ class DataFetcher:
             end_date = datetime.now().strftime("%Y%m%d")
         
         try:
-            # 根据代码判断市场
-            if symbol.startswith('6'):
-                adjust = 'qfq'  # 前复权
-            else:
-                adjust = 'qfq'
+            adjust = "qfq"
             
             df = ak.stock_zh_a_hist(
                 symbol=symbol,
@@ -203,10 +196,10 @@ class DataFetcher:
         """获取最新收盘价"""
         if df.empty:
             return None
-        return float(df.iloc[-1]['收盘'])
+        return float(df.iloc[-1]["收盘"])
     
     def get_previous_close_price(self, df: pd.DataFrame) -> Optional[float]:
         """获取前一日收盘价"""
         if len(df) < 2:
             return None
-        return float(df.iloc[-2]['收盘'])
+        return float(df.iloc[-2]["收盘"])

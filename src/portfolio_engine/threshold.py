@@ -3,9 +3,10 @@ Threshold Manager and Alert System
 阈值管理和警报系统
 """
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import Dict, List
 from dataclasses import dataclass
-from volatility_calculator import PortfolioVolatilityResult, VolatilityResult
+
+from .volatility import PortfolioVolatilityResult
 
 
 class AlertLevel(Enum):
@@ -50,10 +51,10 @@ class AlertResult:
     
     def __str__(self) -> str:
         if self.level == AlertLevel.NONE:
-            return "✅ 当前波动正常，无需关注"
+            return "当前波动正常，无需关注"
         
-        level_emoji = "⚠️" if self.level == AlertLevel.WARNING else "🚨"
-        return f"{level_emoji} {self.message}"
+        level_label = "[WARNING]" if self.level == AlertLevel.WARNING else "[ALERT]"
+        return f"{level_label} {self.message}"
 
 
 class ThresholdManager:
@@ -154,12 +155,12 @@ class ThresholdManager:
         # 组合级别消息
         if portfolio_level == AlertLevel.ALERT:
             messages.append(
-                f"【重要警报】组合总波动 {portfolio_result.total_volatility:.2f}% "
+                f"[ALERT] 组合总波动 {portfolio_result.total_volatility:.2f}% "
                 f"超过警报阈值 {self.config.portfolio_alert}%"
             )
         elif portfolio_level == AlertLevel.WARNING:
             messages.append(
-                f"【警告】组合总波动 {portfolio_result.total_volatility:.2f}% "
+                f"[WARNING] 组合总波动 {portfolio_result.total_volatility:.2f}% "
                 f"超过警告阈值 {self.config.portfolio_warning}%"
             )
         
@@ -170,11 +171,11 @@ class ThresholdManager:
             
             if alert_items:
                 alert_names = ", ".join([f"{item[1]}({item[0]})" for item in alert_items])
-                messages.append(f"【重要警报】以下持仓波动异常: {alert_names}")
+                messages.append(f"[ALERT] 以下持仓波动异常: {alert_names}")
             
             if warning_items:
                 warning_names = ", ".join([f"{item[1]}({item[0]})" for item in warning_items])
-                messages.append(f"【警告】以下持仓波动较大: {warning_names}")
+                messages.append(f"[WARNING] 以下持仓波动较大: {warning_names}")
         
         if not messages:
             return "当前组合波动在正常范围内"

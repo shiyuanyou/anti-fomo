@@ -2,12 +2,12 @@
 Notification System
 通知系统 - 支持控制台、邮件、文件等多种通知方式
 """
-import os
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 from pathlib import Path
-from volatility_calculator import PortfolioVolatilityResult
-from threshold_manager import AlertResult
+
+from portfolio_engine import PortfolioVolatilityResult
+from portfolio_engine import AlertResult
 
 
 class NotificationManager:
@@ -114,15 +114,14 @@ class NotificationManager:
         with open(log_path, 'a', encoding='utf-8') as f:
             f.write(content + "\n\n")
         
-        print(f"✅ 通知已保存到: {log_path}")
+        print(f"通知已保存到: {log_path}")
     
     def _send_email(self, content: str, method: Dict):
         """发送邮件（简化版，需要配置 SMTP）"""
-        # 这里是简化实现，实际使用需要配置 SMTP
         smtp_host = method.get('smtp_host')
         if not smtp_host:
-            print("⚠️  邮件通知未配置 SMTP，跳过")
+            print("邮件通知未配置 SMTP，跳过")
             return
         
         # TODO: 实现邮件发送逻辑
-        print("📧 邮件通知功能待实现")
+        print("邮件通知功能待实现")

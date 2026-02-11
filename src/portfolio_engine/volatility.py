@@ -3,8 +3,7 @@ Volatility Calculator
 波动率计算模块
 """
 import pandas as pd
-import numpy as np
-from typing import Dict, List, Tuple
+from typing import List
 from dataclasses import dataclass
 
 
@@ -120,11 +119,11 @@ class VolatilityCalculator:
                 month_return_pct=0
             )
         
-        current_price = float(df.iloc[-1]['收盘'])
-        previous_price = float(df.iloc[-2]['收盘'])
+        current_price = float(df.iloc[-1]["收盘"])
+        previous_price = float(df.iloc[-2]["收盘"])
         change_pct = VolatilityCalculator.calculate_daily_return(current_price, previous_price)
-        volatility = VolatilityCalculator.calculate_volatility(df['收盘'])
-        month_return_pct = VolatilityCalculator.calculate_month_return(df['收盘'])
+        volatility = VolatilityCalculator.calculate_volatility(df["收盘"])
+        month_return_pct = VolatilityCalculator.calculate_month_return(df["收盘"])
         
         return VolatilityResult(
             symbol=symbol,
