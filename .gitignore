@@ -45,3 +45,5 @@ cache/
 # Jupyter
 .ipynb_checkpoints/
 *.ipynb
+drawio/.*.drawio.bkp
+config.asset.yaml

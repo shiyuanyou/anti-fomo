@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anti-FOMO | 资产配置可视化</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-brand">
+                <span class="header-logo">&#9678;</span>
+                <h1>Anti-FOMO</h1>
+            </div>
+            <p class="header-sub">资产配置可视化监控</p>
+        </header>
+
+        <main class="main">
+            <!-- Sidebar: Input Area -->
+            <aside class="sidebar">
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="panel-indicator"></span>
+                        输入区
+                    </div>
+                    <div class="panel-body">
+                        <div class="form-group">
+                            <label>资产名</label>
+                            <input type="text" id="add-name" placeholder="e.g. 中证A500">
+                        </div>
+                        <div class="form-group">
+                            <label>金额</label>
+                            <input type="number" id="add-amount" placeholder="e.g. 50000">
+                        </div>
+                        <div class="form-group">
+                            <label>股票代码</label>
+                            <input type="text" id="add-code" placeholder="e.g. 000510">
+                        </div>
+                        <div class="form-group">
+                            <label>风格</label>
+                            <select id="add-style">
+                                <option value="">选择风格</option>
+                                <option>大盘价值</option>
+                                <option>大盘成长</option>
+                                <option>中小盘</option>
+                                <option>商品对冲</option>
+                                <option>防御型</option>
+                                <option>新兴市场</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>国别</label>
+                            <select id="add-region">
+                                <option value="">选择区域</option>
+                                <option>中国大陆</option>
+                                <option>中国香港</option>
+                                <option>美国</option>
+                                <option>欧洲</option>
+                                <option>印度</option>
+                                <option>全球</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>类型</label>
+                            <select id="add-type">
+                                <option value="">选择类型</option>
+                                <option>股票</option>
+                                <option>大宗商品</option>
+                                <option>货币基金</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary" id="btn-add-asset">
+                            <span class="btn-icon">+</span> 添加资产
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Summary Panel -->
+                <div class="panel panel-summary">
+                    <div class="panel-header">
+                        <span class="panel-indicator"></span>
+                        配置概览
+                    </div>
+                    <div class="panel-body">
+                        <div class="summary-item">
+                            <span class="summary-label">资产数量</span>
+                            <span class="summary-value" id="asset-count">--</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">总金额</span>
+                            <span class="summary-value" id="total-amount">--</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">当前维度</span>
+                            <span class="summary-value" id="current-dim">类型</span>
+                        </div>
+                        <button class="btn btn-save" id="btn-save-config">生成配置文件</button>
+                        <div class="save-status" id="save-status"></div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Display Area -->
+            <section class="display">
+                <div class="display-header">
+                    <h2>展示区</h2>
+                    <div class="dimension-tabs" id="dimension-tabs">
+                        <button class="tab active" data-dim="type">类型</button>
+                        <button class="tab" data-dim="region">区域</button>
+                        <button class="tab" data-dim="style">风格</button>
+                    </div>
+                </div>
+                <div class="treemap-wrapper">
+                    <div class="treemap-container" id="treemap"></div>
+                </div>
+                <!-- Dimension detail legend -->
+                <div class="detail-bar" id="detail-bar"></div>
+            </section>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
