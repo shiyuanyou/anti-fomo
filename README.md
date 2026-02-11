@@ -1,202 +1,117 @@
 # Anti-FOMO - 股票组合波动监控工具
 
-一个帮助投资者对抗 FOMO（Fear Of Missing Out）情绪的智能股票组合监控工具。
+帮助投资者对抗 FOMO（Fear Of Missing Out）情绪的智能股票组合监控工具。
 
 ## 功能特性
 
-### 1. 灵活的组合配置
-- 支持指数和个股
-- 支持按金额或比例配置仓位
-- 简单的 YAML 配置文件
-
-### 2. 智能波动监控
-- 实时计算组合总波动率
-- 分析单个持仓波动情况
-- 历史波动率追踪
-
-### 3. 可自定义阈值
-- 组合波动阈值（警告/警报）
-- 个股波动阈值（警告/警报）
-- 连续波动天数监控
-
-### 4. AI 智能分析
-- 接入 OpenAI GPT-4 分析市场波动
-- 专业投资建议
-- 避免情绪化决策
-
-### 5. 多渠道通知
-- 控制台输出
-- 文件日志
-- 邮件通知（可配置）
-
-### 6. 自动化调度
-- 每日收盘后自动检查
-- 可配置检查时间
-- 支持跳过周末和节假日
+- **Web 资产配置** — 通过浏览器可视化配置持仓，生成 `config.asset.yaml`
+- **智能波动监控** — 计算组合和个股波动率，双层阈值（警告/警报）自动判定
+- **AI 分析** — 可选接入 OpenAI 兼容 API，提供理性投资建议
+- **多渠道通知** — 控制台、文件日志、邮件（可配置）
+- **自动化调度** — 每日收盘后定时检查，支持跳过周末和节假日
 
 ## 安装
 
 ```bash
-# 克隆或下载项目后
-cd anti-fomo
-
-# 安装依赖
 pip install -r requirements.txt
 ```
 
-## 配置
+## 快速开始
 
-编辑 `config.yaml` 文件：
+### 1. 配置资产（Web UI）
 
-### 1. 配置投资组合
-
-```yaml
-portfolio:
-  holdings:
-    - symbol: "000510"  # 中证A500
-      name: "中证A500"
-      type: "index"
-      allocation_type: "amount"  # amount(金额) 或 ratio(比例)
-      value: 50000  # 金额或百分比
-    
-    - symbol: "930050"  # 中证A50
-      name: "中证A50"
-      type: "index"
-      allocation_type: "ratio"
-      value: 30  # 30%
+```bash
+python serve.py
 ```
 
-### 2. 配置波动阈值
+打开 `http://localhost:8080`，在界面中添加持仓并保存。这会生成 `config.asset.yaml`，
+作为持仓的唯一数据来源。
+
+### 2. 运行波动检查
+
+```bash
+python run.py            # 单次检查
+python run.py schedule   # 每日定时检查（默认 15:30）
+```
+
+## 配置说明
+
+项目使用两个配置文件：
+
+| 文件 | 用途 | 编辑方式 |
+|------|------|----------|
+| `config.yaml` | 运营配置（阈值、AI、通知、调度） | 手动编辑 |
+| `config.asset.yaml` | 持仓配置（股票名称、代码、比例） | 通过 `serve.py` Web UI 生成 |
+
+`config.yaml` **不包含** 持仓数据。所有股票名称、代码、比例均来自 `config.asset.yaml`。
+
+### 波动阈值
 
 ```yaml
 thresholds:
   portfolio_volatility:
-    warning: 3.0   # 警告阈值：日波动超过3%
-    alert: 5.0     # 警报阈值：日波动超过5%
-  
+    warning: 3.0   # 组合日波动超过 3% 警告
+    alert: 5.0     # 组合日波动超过 5% 警报
   individual_volatility:
-    warning: 5.0   # 个股警告阈值
-    alert: 8.0     # 个股警报阈值
+    warning: 5.0   # 个股日波动超过 5% 警告
+    alert: 8.0     # 个股日波动超过 8% 警报
 ```
 
-### 3. 配置 AI 分析（可选）
+### AI 分析（可选）
 
 ```yaml
 ai_analysis:
   enabled: true
-  provider: "openai"
-  model: "gpt-4"
-  base_url: ""  # OpenAI 兼容地址，如 https://api.openai.com/v1
-  api_key: ""  # 建议留空，使用环境变量 OPENAI_API_KEY
-  always_analyze: false  # true 时即使未触发警报也会输出 AI 分析
+  model: "qwen-plus"
+  base_url: "https://dashscope.aliyuncs.com/compatible-mode/v1"
+  api_key: ""  # 建议使用环境变量 OPENAI_API_KEY
 ```
 
-## 使用方法
-
-### 单次运行（立即检查）
-
-```bash
-python run.py
-```
-
-### 资产配置向导（生成初始配置）
-
-```bash
-python run.py configure
-```
-
-会生成 `config.asset.yaml`，包含分类结构、比例、可计算资产权重与起始价格。
-主程序会自动读取 `asset_config_path` 指向的配置文件。
-
-### 定时调度（每日自动运行）
-
-```bash
-python run.py schedule
-```
-
-调度器会在每天配置的时间（默认 15:30）自动执行检查。
-
-## 输出示例
-
-```
-============================================================
-Anti-FOMO 波动监控报告
-时间: 2025-02-05 15:30:00
-============================================================
-
-【警告】组合总波动 3.5% 超过警告阈值 3.0%
-
-组合波动详情:
-------------------------------------------------------------
-组合总波动: 3.50%
-加权波动: 2.80%
-最大波动持仓: 中证2000 (4.20%)
-
-个股明细:
-  中证A500(000510): 当前价 1234.56, 涨跌幅 +2.10%, 波动率 2.30%, 权重 50.00%
-  中证A50(930050): 当前价 5678.90, 涨跌幅 +1.80%, 波动率 1.90%, 权重 30.00%
-  中证2000(932000): 当前价 2941.47, 涨跌幅 +4.20%, 波动率 3.50%, 权重 20.00%
-
-AI 专业分析:
-------------------------------------------------------------
-根据当前波动情况分析：
-
-1. **波动性质**：今日组合波动3.5%，略高于警告阈值，主要由中证2000的上涨贡献...
-
-2. **是否需要关注**：建议保持观察，暂无需采取行动...
-
-3. **操作建议**：持有为主，可考虑...
-
-============================================================
-```
+支持任何 OpenAI 兼容 API。API Key 推荐通过环境变量 `OPENAI_API_KEY` 或 `AI_API_KEY` 传入。
 
 ## 项目结构
 
 ```
 anti-fomo/
-├── config.yaml                 # 配置文件
-├── requirements.txt            # 依赖包
-├── run.py                      # 运行脚本
+├── run.py                       # CLI 入口：波动检查 / 定时调度
+├── serve.py                     # HTTP 服务：Web 资产配置 UI
+├── config.yaml                  # 运营配置（阈值、AI、通知、调度）
+├── config.asset.yaml            # 持仓配置（由 serve.py 生成，gitignore）
+├── config.example.yaml          # 示例配置
+├── requirements.txt             # Python 依赖
 ├── src/
-│   ├── __init__.py
-│   ├── main.py                 # 主程序
-│   ├── portfolio.py            # 组合配置模块
-│   ├── data_fetcher.py         # 数据获取模块
-│   ├── volatility_calculator.py# 波动率计算模块
-│   ├── threshold_manager.py    # 阈值管理模块
-│   ├── ai_analyzer.py          # AI 分析模块
-│   └── notification.py         # 通知模块
-└── logs/                       # 日志目录
-    └── alerts.log              # 警报日志
+│   ├── main.py                  # 主程序 AntiFOMO 类
+│   ├── portfolio.py             # 组合管理
+│   ├── data_fetcher.py          # 市场数据获取（akshare）
+│   ├── volatility_calculator.py # 波动率计算
+│   ├── threshold_manager.py     # 阈值判断与警报
+│   ├── ai_analyzer.py           # AI 分析（OpenAI 兼容）
+│   ├── notification.py          # 多渠道通知
+│   ├── asset_configurator.py    # 资产配置向导（legacy CLI）
+│   └── mock_data.py             # 模拟数据生成
+├── web/                         # Web 前端（serve.py 提供）
+│   ├── index.html
+│   ├── app.js
+│   └── style.css
+├── docs/                        # 文档 / AI 对话记忆
+└── logs/                        # 日志目录
 ```
 
 ## 依赖项
 
-- `akshare`: 获取 A 股市场数据
-- `pyyaml`: 配置文件解析
-- `pandas`: 数据处理
-- `numpy`: 数值计算
-- `schedule`: 任务调度
-- `openai`: AI 分析（可选）
+- `akshare` — A 股市场数据
+- `pandas` / `numpy` — 数据处理
+- `pyyaml` — 配置解析
+- `schedule` — 定时调度
+- `openai` — AI 分析（可选）
 
 ## 注意事项
 
-1. **API Key**: 如需使用 AI 分析功能，请在 `config.yaml` 中配置有效的 OpenAI API Key
-2. **数据来源**: 默认使用 akshare 获取中国A股数据，数据更新可能有延迟
-3. **运行时间**: 建议在交易日收盘后运行，以获取最新数据
-4. **网络连接**: 需要稳定的网络连接以获取市场数据和调用 AI API
-
-## 使用建议
-
-1. **首次使用**: 先运行单次检查，确认配置正确
-2. **调整阈值**: 根据个人风险偏好调整波动阈值
-3. **定期查看**: 建议每周查看一次日志，了解组合波动趋势
-4. **理性投资**: AI 建议仅供参考，最终决策需结合个人情况
+- 数据来源为 akshare，需要网络连接
+- 建议在交易日收盘后运行，以获取最新数据
+- AI 建议仅供参考，不构成投资建议
+- `config.asset.yaml` 已在 `.gitignore` 中，不会提交到仓库
 
 ## License
 
 MIT License
-
-## 作者
-
-Created with ❤️ for rational investors
