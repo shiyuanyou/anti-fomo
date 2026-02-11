@@ -1,25 +1,3 @@
-# 股票组合配置
-portfolio:
-  # 示例配置，支持指数和个股
-  holdings:
-    - symbol: "000510"  # 中证A500
-      name: "中证A500"
-      type: "index"
-      allocation_type: "amount"  # amount(金额) 或 ratio(比例)
-      value: 50000  # 如果是amount则为金额，如果是ratio则为百分比(0-100)
-    
-    - symbol: "930050"  # 中证A50
-      name: "中证A50"
-      type: "index"
-      allocation_type: "ratio"
-      value: 30  # 30%
-    
-    - symbol: "932000"  # 中证2000
-      name: "中证2000"
-      type: "index"
-      allocation_type: "ratio"
-      value: 20  # 20%
-
 # 波动率阈值配置
 thresholds:
   # 总体组合波动阈值（百分比）

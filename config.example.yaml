@@ -1,29 +1,6 @@
-"""
-测试配置 - 用于快速测试系统功能
-复制此文件为 config.yaml 并修改为您的实际配置
-"""
-
-# 股票组合配置
-portfolio:
-  # 示例：简单的三指数配置
-  holdings:
-    - symbol: "000510"  # 中证A500
-      name: "中证A500"
-      type: "index"
-      allocation_type: "ratio"
-      value: 50  # 50%
-    
-    - symbol: "930050"  # 中证A50
-      name: "中证A50"
-      type: "index"
-      allocation_type: "ratio"
-      value: 30  # 30%
-    
-    - symbol: "932000"  # 中证2000
-      name: "中证2000"
-      type: "index"
-      allocation_type: "ratio"
-      value: 20  # 20%
+# 测试配置 - 用于快速测试系统功能
+# 复制此文件为 config.yaml 并修改为您的实际配置
+# 持仓配置请通过 serve.py 生成 config.asset.yaml
 
 # 波动率阈值配置（测试用，较敏感）
 thresholds:

@@ -57,13 +57,23 @@ class AntiFOMO:
 
         asset_config_path = config.get("asset_config_path", "config.asset.yaml")
         asset_path = Path(asset_config_path)
-        if asset_path.exists():
-            with open(asset_path, "r", encoding="utf-8") as f:
-                asset_config = yaml.safe_load(f)
-            if asset_config.get("portfolio", {}).get("holdings"):
-                config["portfolio"] = asset_config["portfolio"]
-            if asset_config.get("asset_allocation"):
-                config["asset_allocation"] = asset_config["asset_allocation"]
+        if not asset_path.exists():
+            print(f"❌ 资产配置文件 {asset_config_path} 不存在")
+            print("   请先运行 python serve.py 并在 Web 界面中配置资产")
+            raise SystemExit(1)
+
+        with open(asset_path, "r", encoding="utf-8") as f:
+            asset_config = yaml.safe_load(f)
+
+        holdings = asset_config.get("portfolio", {}).get("holdings")
+        if not holdings:
+            print(f"❌ 资产配置文件 {asset_config_path} 中没有持仓数据")
+            print("   请先运行 python serve.py 并在 Web 界面中配置资产")
+            raise SystemExit(1)
+
+        config["portfolio"] = asset_config["portfolio"]
+        if asset_config.get("asset_allocation"):
+            config["asset_allocation"] = asset_config["asset_allocation"]
 
         return config
     
