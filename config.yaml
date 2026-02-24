@@ -97,6 +97,20 @@ cache:
   dir: "cache/"
   ttl_hours: 24                  # 缓存有效期 (小时)
 
+# 决策引擎配置
+decision_engine:
+  enabled: true
+  check_market_volatility: true  # 市场极端时也触发看盘提示
+  rebalance_threshold: 5.0       # 再平衡偏离阈值 (百分点)
+
+# 报告配置
+report:
+  weekly:
+    enabled: true
+    day: "friday"                # 周几生成周报
+    time: "16:00"                # 生成时间
+    include_ai: true             # 是否包含 AI 分析
+
 # 调度配置
 scheduler:
   # 每个交易日收盘后运行（15:30）
