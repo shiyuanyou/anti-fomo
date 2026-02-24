@@ -1634,6 +1634,61 @@ body {
     font-family: var(--font-mono);
 }
 
+/* Metrics delta table */
+.metrics-delta-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    margin-bottom: 2px;
+}
+
+.metrics-delta-table th {
+    text-align: left;
+    padding: 5px 8px;
+    color: var(--text-muted);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.metrics-delta-table td {
+    padding: 7px 8px;
+    border-bottom: 1px solid rgba(56, 189, 248, 0.05);
+}
+
+.metrics-delta-table tr:last-child td {
+    border-bottom: none;
+}
+
+.mdelta-label {
+    font-weight: 600;
+    color: var(--text-primary);
+    width: 30%;
+}
+
+.mdelta-num {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-secondary);
+    width: 25%;
+}
+
+.mdelta-tmpl {
+    color: var(--text-muted);
+}
+
+.mdelta-diff {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    width: 20%;
+}
+
+.mdelta-good    { color: #34D399; }
+.mdelta-bad     { color: #F87171; }
+.mdelta-neutral { color: var(--text-muted); }
+
 /* Diff table */
 .compare-table-section {
     background: var(--bg-surface);

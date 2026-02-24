@@ -122,7 +122,18 @@ function renderCompareResult(result) {
         <div class="compare-metrics-row">
             <div class="chart-panel chart-panel-wide">
                 <div class="chart-panel-title">关键指标对比</div>
-                <div class="chart-canvas-wrap" style="height:200px">
+                <table class="metrics-delta-table" id="metrics-delta-table">
+                    <thead>
+                        <tr>
+                            <th>指标</th>
+                            <th>我的配置</th>
+                            <th>模板</th>
+                            <th>差值</th>
+                        </tr>
+                    </thead>
+                    <tbody id="metrics-delta-body"></tbody>
+                </table>
+                <div class="chart-canvas-wrap" style="height:180px;margin-top:14px">
                     <canvas id="chart-metrics"></canvas>
                 </div>
                 <p class="metrics-note">注：最大回撤取绝对值显示；夏普比率乘以10以便与其他指标同轴展示</p>
@@ -152,16 +163,97 @@ function renderCompareResult(result) {
         renderRadarChart("chart-radar", result.diffs, result.template_name);
         renderDeviationChart("chart-deviation", result.diffs);
 
-        // Fetch template metrics for the grouped bar chart
+        // Fetch template metrics for the grouped bar chart + delta table
         fetch(`/api/templates/${result.template_id}`)
             .then(r => r.json())
             .then(tmpl => {
                 renderMetricsChart("chart-metrics", result.user_metrics, tmpl.metrics, tmpl.name);
+                renderMetricsDelta("metrics-delta-body", result.user_metrics, tmpl.metrics);
             })
             .catch(() => {
                 // Non-critical: metrics chart just won't render
             });
     });
+}
+
+// ============================================================
+//  Metrics delta table
+// ============================================================
+
+/**
+ * Populate the metrics delta table with user vs. template values and colored diff.
+ * @param {string} tbodyId - ID of the <tbody> element
+ * @param {object} userM   - user_metrics from /api/compare
+ * @param {object} tmplM   - template.metrics from /api/templates/{id}
+ */
+function renderMetricsDelta(tbodyId, userM, tmplM) {
+    const tbody = document.getElementById(tbodyId);
+    if (!tbody) return;
+
+    // For max_drawdown: lower absolute value is better, so delta sign is flipped
+    const rows = [
+        {
+            label: "年化收益",
+            userVal: userM.annualized_return,
+            tmplVal: tmplM.annualized_return,
+            fmt: v => (v >= 0 ? "+" : "") + v.toFixed(1) + "%",
+            diffFmt: d => (d >= 0 ? "+" : "−") + Math.abs(d).toFixed(1) + "%",
+            higherIsBetter: true,
+        },
+        {
+            label: "年化波动",
+            userVal: userM.annualized_volatility,
+            tmplVal: tmplM.annualized_volatility,
+            fmt: v => v.toFixed(1) + "%",
+            diffFmt: d => (d >= 0 ? "+" : "−") + Math.abs(d).toFixed(1) + "%",
+            higherIsBetter: false,
+        },
+        {
+            label: "最大回撤",
+            userVal: userM.max_drawdown,
+            tmplVal: tmplM.max_drawdown,
+            fmt: v => v.toFixed(1) + "%",
+            diffFmt: d => (d >= 0 ? "+" : "−") + Math.abs(d).toFixed(1) + "%",
+            higherIsBetter: false,   // more negative = worse
+        },
+        {
+            label: "夏普比率",
+            userVal: userM.sharpe_ratio,
+            tmplVal: tmplM.sharpe_ratio,
+            fmt: v => v.toFixed(2),
+            diffFmt: d => (d >= 0 ? "+" : "−") + Math.abs(d).toFixed(2),
+            higherIsBetter: true,
+        },
+    ];
+
+    tbody.innerHTML = rows.map(row => {
+        const diff = row.userVal - row.tmplVal;
+        const absDiff = Math.abs(diff);
+        const isNeutral = absDiff < 0.005;
+
+        // Determine if diff is favorable
+        let favorable;
+        if (isNeutral) {
+            favorable = null;
+        } else if (row.higherIsBetter) {
+            favorable = diff > 0;
+        } else {
+            // For volatility and drawdown, user being lower (diff < 0) is better
+            favorable = diff < 0;
+        }
+
+        // Format the diff value directly (avoids stripping/re-applying signs)
+        const diffDisplay = row.diffFmt(diff);
+
+        const cls = isNeutral ? "mdelta-neutral" : favorable ? "mdelta-good" : "mdelta-bad";
+
+        return `<tr>
+            <td class="mdelta-label">${row.label}</td>
+            <td class="mdelta-num">${row.fmt(row.userVal)}</td>
+            <td class="mdelta-num mdelta-tmpl">${row.fmt(row.tmplVal)}</td>
+            <td class="mdelta-diff ${cls}">${diffDisplay}</td>
+        </tr>`;
+    }).join("");
 }
 
 // ============================================================
