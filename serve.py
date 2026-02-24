@@ -2,9 +2,14 @@
 HTTP server for the Anti-FOMO visualization frontend with asset configuration API.
 
 Endpoints:
-    GET  /api/assets  — Return current web assets from config.asset.yaml (or []).
-    POST /api/save    — Accept JSON asset list, generate config.asset.yaml.
-    *    /*            — Static files from web/ directory.
+    GET  /api/assets              — Return current web assets from config.asset.yaml (or []).
+    POST /api/save                — Accept JSON asset list, generate config.asset.yaml.
+    GET  /api/templates           — Return all portfolio templates (v2).
+    GET  /api/templates/{id}      — Return single template by ID (v2).
+    POST /api/compare             — Compare user config vs. a template (v2).
+    POST /api/ai/profile-match    — AI personality matching (v2).
+    POST /api/ai/migrate          — AI migration advice (v2).
+    *    /*                        — Static files from web/ directory.
 
 Usage: python serve.py [port]
 Then open http://localhost:8080 in your browser.
@@ -15,6 +20,7 @@ import socketserver
 import os
 import sys
 import json
+import re
 from pathlib import Path
 from datetime import datetime
 
@@ -24,6 +30,30 @@ PORT = 8080
 BASE_DIR = Path(__file__).parent.resolve()
 WEB_DIR = BASE_DIR / "web"
 CONFIG_ASSET_PATH = BASE_DIR / "config.asset.yaml"
+SRC_DIR = BASE_DIR / "src"
+
+# Add src/ to path so template_engine and ai_engine can be imported.
+if str(SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(SRC_DIR))
+
+
+# ------------------------------------------------------------------
+#  Lazy imports for v2 engines (imported on first request)
+# ------------------------------------------------------------------
+
+def _get_template_library():
+    from template_engine import TemplateLibrary
+    return TemplateLibrary
+
+
+def _get_comparator():
+    from template_engine import TemplateComparator
+    return TemplateComparator
+
+
+def _get_template_advisor():
+    from ai_engine.template_advisor import TemplateAdvisor
+    return TemplateAdvisor
 
 
 # ------------------------------------------------------------------
@@ -148,6 +178,11 @@ class Handler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
         if self.path == "/api/assets":
             self._handle_get_assets()
+        elif self.path == "/api/templates":
+            self._handle_get_templates()
+        elif re.match(r"^/api/templates/[^/]+$", self.path):
+            template_id = self.path.split("/")[-1]
+            self._handle_get_template(template_id)
         else:
             super().do_GET()
 
@@ -164,22 +199,54 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 pass  # return empty list on any parse failure
         self._json_response(200, assets)
 
+    def _handle_get_templates(self):
+        """Return all portfolio templates as a JSON array."""
+        try:
+            lib = _get_template_library()
+            templates = [t.to_dict() for t in lib.all()]
+            self._json_response(200, templates)
+        except Exception as e:
+            self._json_response(500, {"error": str(e)})
+
+    def _handle_get_template(self, template_id: str):
+        """Return a single template by ID."""
+        try:
+            lib = _get_template_library()
+            template = lib.get(template_id)
+            if template is None:
+                self._json_response(404, {"error": f"Template '{template_id}' not found"})
+                return
+            self._json_response(200, template.to_dict())
+        except Exception as e:
+            self._json_response(500, {"error": str(e)})
+
     # --- POST ----------------------------------------------------------
 
     def do_POST(self):
         if self.path == "/api/save":
             self._handle_save()
+        elif self.path == "/api/compare":
+            self._handle_compare()
+        elif self.path == "/api/ai/profile-match":
+            self._handle_ai_profile_match()
+        elif self.path == "/api/ai/migrate":
+            self._handle_ai_migrate()
         else:
             self.send_error(404)
 
-    def _handle_save(self):
-        """Accept JSON asset list, generate config.asset.yaml."""
+    def _read_json_body(self):
+        """Read and parse the request body as JSON. Returns (data, error_str)."""
         content_length = int(self.headers.get("Content-Length", 0))
         body = self.rfile.read(content_length)
-
         try:
-            web_assets = json.loads(body)
-        except (json.JSONDecodeError, ValueError):
+            return json.loads(body), None
+        except (json.JSONDecodeError, ValueError) as e:
+            return None, str(e)
+
+    def _handle_save(self):
+        """Accept JSON asset list, generate config.asset.yaml."""
+        web_assets, err = self._read_json_body()
+        if err:
             self._json_response(400, {"ok": False, "error": "Invalid JSON"})
             return
 
@@ -195,6 +262,116 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self._json_response(200, {"ok": True})
         except Exception as e:
             self._json_response(500, {"ok": False, "error": str(e)})
+
+    def _handle_compare(self):
+        """Compare user config vs. a template. Body: {template_id, web_assets?}."""
+        body, err = self._read_json_body()
+        if err or not isinstance(body, dict):
+            self._json_response(400, {"error": "Invalid JSON body"})
+            return
+
+        template_id = body.get("template_id")
+        if not template_id:
+            self._json_response(400, {"error": "Missing template_id"})
+            return
+
+        try:
+            lib = _get_template_library()
+            template = lib.get(template_id)
+            if template is None:
+                self._json_response(404, {"error": f"Template '{template_id}' not found"})
+                return
+
+            Comparator = _get_comparator()
+            comparator = Comparator()
+            web_assets = body.get("web_assets")  # optional; if absent, load from file
+            result = comparator.compare(template, web_assets=web_assets)
+
+            response = {
+                "template_id": result.template_id,
+                "template_name": result.template_name,
+                "user_total_amount": result.user_total_amount,
+                "diffs": [
+                    {
+                        "category": d.category,
+                        "region": d.region,
+                        "user_weight": d.user_weight,
+                        "template_weight": d.template_weight,
+                        "deviation": d.deviation,
+                    }
+                    for d in result.diffs
+                ],
+                "user_metrics": {
+                    "annualized_return": result.user_metrics.annualized_return,
+                    "annualized_volatility": result.user_metrics.annualized_volatility,
+                    "max_drawdown": result.user_metrics.max_drawdown,
+                    "sharpe_ratio": result.user_metrics.sharpe_ratio,
+                    "data_period": result.user_metrics.data_period,
+                },
+                "summary": result.summary,
+            }
+            self._json_response(200, response)
+        except Exception as e:
+            self._json_response(500, {"error": str(e)})
+
+    def _handle_ai_profile_match(self):
+        """AI personality matching. Body: {web_assets?}."""
+        body, err = self._read_json_body()
+        if err or not isinstance(body, dict):
+            self._json_response(400, {"error": "Invalid JSON body"})
+            return
+
+        try:
+            web_assets = body.get("web_assets")
+            if not web_assets:
+                Comparator = _get_comparator()
+                web_assets = Comparator().load_web_assets()
+
+            if not web_assets:
+                self._json_response(400, {"error": "No asset configuration found"})
+                return
+
+            Advisor = _get_template_advisor()
+            advisor = Advisor()
+            result = advisor.match_personality(web_assets)
+            self._json_response(200, {"result": result})
+        except Exception as e:
+            self._json_response(500, {"error": str(e)})
+
+    def _handle_ai_migrate(self):
+        """AI migration advice. Body: {template_id, web_assets?}."""
+        body, err = self._read_json_body()
+        if err or not isinstance(body, dict):
+            self._json_response(400, {"error": "Invalid JSON body"})
+            return
+
+        template_id = body.get("template_id")
+        if not template_id:
+            self._json_response(400, {"error": "Missing template_id"})
+            return
+
+        try:
+            lib = _get_template_library()
+            template = lib.get(template_id)
+            if template is None:
+                self._json_response(404, {"error": f"Template '{template_id}' not found"})
+                return
+
+            web_assets = body.get("web_assets")
+            if not web_assets:
+                Comparator = _get_comparator()
+                web_assets = Comparator().load_web_assets()
+
+            if not web_assets:
+                self._json_response(400, {"error": "No asset configuration found"})
+                return
+
+            Advisor = _get_template_advisor()
+            advisor = Advisor()
+            result = advisor.suggest_migration(web_assets, template)
+            self._json_response(200, {"result": result})
+        except Exception as e:
+            self._json_response(500, {"error": str(e)})
 
     # --- Helpers -------------------------------------------------------
 
@@ -219,7 +396,9 @@ def main():
     with socketserver.TCPServer(("", port), Handler) as httpd:
         print(f"\n  Anti-FOMO Visualization")
         print(f"  http://localhost:{port}")
-        print(f"  API: GET /api/assets  POST /api/save\n")
+        print(f"  API: GET /api/assets  POST /api/save")
+        print(f"       GET /api/templates  GET /api/templates/{{id}}")
+        print(f"       POST /api/compare  POST /api/ai/profile-match  POST /api/ai/migrate\n")
         try:
             httpd.serve_forever()
         except KeyboardInterrupt:

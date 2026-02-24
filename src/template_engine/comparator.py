@@ -1,0 +1,270 @@
+"""
+TemplateComparator: compare user holdings against a portfolio template.
+
+Reads user holdings from config.asset.yaml (via a holdings list passed in),
+maps them to the template's allocation categories, and computes deviation.
+
+No live data is used. All comparisons are weight-based.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import List, Optional
+
+import yaml
+
+from .templates import AssetAllocation, PortfolioTemplate, TemplateMetrics
+
+
+BASE_DIR = Path(__file__).parent.parent.parent.resolve()
+CONFIG_ASSET_PATH = BASE_DIR / "config.asset.yaml"
+
+
+@dataclass
+class AllocationDiff:
+    """Per-category deviation between user config and template."""
+
+    category: str
+    region: str
+    user_weight: float        # user's current weight (0-1); 0 if category absent
+    template_weight: float    # template target weight (0-1)
+    deviation: float          # user_weight - template_weight; positive = overweight
+
+
+@dataclass
+class ComparisonResult:
+    """Result of comparing user holdings against a portfolio template."""
+
+    template_id: str
+    template_name: str
+    user_total_amount: float
+    diffs: List[AllocationDiff]
+    user_metrics: TemplateMetrics      # estimated metrics based on user allocation
+    summary: str                       # brief human-readable summary
+
+
+# ---------------------------------------------------------------------------
+#  Category mapping helpers
+# ---------------------------------------------------------------------------
+
+# Maps (asset type, region) tuples from web_assets to template category labels.
+# This is a best-effort mapping; unrecognised combos fall into "其他".
+_CATEGORY_MAP: dict[tuple[str, str], tuple[str, str]] = {
+    # type, region -> (category, region)
+    ("股票", "中国大陆"):  ("A股大盘",      "中国"),
+    ("股票", "中国香港"):  ("港股",          "中国香港"),
+    ("股票", "美国"):      ("美股大盘",      "美国"),
+    ("股票", "欧洲"):      ("欧洲股票",      "欧洲"),
+    ("股票", "印度"):      ("新兴市场股票",  "全球"),
+    ("股票", "日本"):      ("日本股票",      "日本"),
+    ("股票", "全球"):      ("发达市场股票",  "全球"),
+    ("大宗商品", "全球"):  ("黄金",          "全球"),
+    ("大宗商品", "中国大陆"): ("大宗商品",   "中国"),
+    ("货币基金", "中国大陆"): ("货币基金",   "中国"),
+    ("货币基金", "全球"):  ("货币基金",      "全球"),
+}
+
+# Style-based sub-classification overrides (applied after type/region mapping)
+_STYLE_OVERRIDES: dict[str, str] = {
+    "大盘价值":  "A股大盘",
+    "大盘成长":  "A股成长",
+    "中小盘":    "A股小盘",
+    "新兴市场":  "新兴市场股票",
+    "商品对冲":  "黄金",
+    "防御型":    "货币基金",
+}
+
+# Category-level metrics contribution weights (simplified linear model)
+# Values represent approximate contribution to return/vol/drawdown per 100% allocation.
+# These are rough heuristics for estimating user portfolio metrics.
+_CATEGORY_RETURN: dict[str, float] = {
+    "A股大盘":      9.0,
+    "A股成长":      11.0,
+    "A股中盘":      9.5,
+    "A股小盘":      10.0,
+    "港股":         7.0,
+    "美股大盘":     11.5,
+    "美股科技":     14.0,
+    "欧洲股票":     7.5,
+    "日本股票":     7.0,
+    "新兴市场股票": 8.5,
+    "发达市场股票": 9.5,
+    "港股科技":     9.0,
+    "债券":         3.5,
+    "短期债券":     2.8,
+    "黄金":         5.5,
+    "大宗商品":     4.0,
+    "货币基金":     2.2,
+    "其他":         4.0,
+}
+_CATEGORY_VOL: dict[str, float] = {
+    "A股大盘":      20.0,
+    "A股成长":      26.0,
+    "A股中盘":      22.0,
+    "A股小盘":      28.0,
+    "港股":         22.0,
+    "美股大盘":     15.0,
+    "美股科技":     22.0,
+    "欧洲股票":     16.0,
+    "日本股票":     17.0,
+    "新兴市场股票": 20.0,
+    "发达市场股票": 14.0,
+    "港股科技":     28.0,
+    "债券":         4.0,
+    "短期债券":     1.5,
+    "黄金":         14.0,
+    "大宗商品":     18.0,
+    "货币基金":     0.5,
+    "其他":         12.0,
+}
+_RISK_FREE_RATE = 2.0  # approximate 2010-2024 average risk-free rate (%)
+
+
+def _map_asset_to_category(asset: dict) -> tuple[str, str]:
+    """Map a web_asset dict to a (category, region) tuple."""
+    a_type = asset.get("type", "")
+    a_region = asset.get("region", "")
+    a_style = asset.get("style", "")
+
+    # Style override takes priority for equity assets
+    if a_type == "股票" and a_style in _STYLE_OVERRIDES:
+        cat = _STYLE_OVERRIDES[a_style]
+        return cat, a_region if a_region else "中国"
+
+    key = (a_type, a_region)
+    if key in _CATEGORY_MAP:
+        return _CATEGORY_MAP[key]
+
+    return ("其他", a_region or "全球")
+
+
+def _estimate_user_metrics(category_weights: dict[str, float]) -> TemplateMetrics:
+    """Estimate portfolio metrics from category weights (simplified linear model)."""
+    weighted_return = sum(
+        w * _CATEGORY_RETURN.get(cat, 4.0)
+        for cat, w in category_weights.items()
+    )
+    # Simplified volatility: use weighted average (ignores correlation — intentional approximation)
+    weighted_vol = sum(
+        w * _CATEGORY_VOL.get(cat, 12.0)
+        for cat, w in category_weights.items()
+    )
+    # Sharpe estimate
+    sharpe = (weighted_return - _RISK_FREE_RATE) / weighted_vol if weighted_vol > 0 else 0.0
+    # Max drawdown: rough estimate based on equity concentration
+    equity_weight = sum(
+        w for cat, w in category_weights.items()
+        if cat not in ("债券", "短期债券", "黄金", "大宗商品", "货币基金", "其他")
+    )
+    est_drawdown = -(equity_weight * 55.0 + (1 - equity_weight) * 8.0)
+
+    return TemplateMetrics(
+        annualized_return=round(weighted_return, 1),
+        annualized_volatility=round(weighted_vol, 1),
+        max_drawdown=round(est_drawdown, 1),
+        sharpe_ratio=round(sharpe, 2),
+        data_period="估算（基于当前配置权重）",
+    )
+
+
+def _generate_summary(diffs: List[AllocationDiff], template_name: str) -> str:
+    """Generate a brief human-readable comparison summary."""
+    overweight = [d for d in diffs if d.deviation > 0.05]
+    underweight = [d for d in diffs if d.deviation < -0.05]
+
+    parts = []
+    if overweight:
+        over_str = "、".join(f"{d.category}(+{d.deviation*100:.0f}%)" for d in overweight[:3])
+        parts.append(f"相比{template_name}，当前配置超配：{over_str}")
+    if underweight:
+        under_str = "、".join(f"{d.category}({d.deviation*100:.0f}%)" for d in underweight[:3])
+        parts.append(f"低配：{under_str}")
+    if not parts:
+        parts.append(f"当前配置与{template_name}整体接近，主要权重偏差在 5% 以内")
+    return "；".join(parts) + "。"
+
+
+class TemplateComparator:
+    """Compare user holdings from config.asset.yaml against a portfolio template."""
+
+    def __init__(self, config_asset_path: Optional[Path] = None):
+        self._path = config_asset_path or CONFIG_ASSET_PATH
+
+    def load_web_assets(self) -> List[dict]:
+        """Load web_assets list from config.asset.yaml. Returns [] if not found."""
+        if not self._path.exists():
+            return []
+        try:
+            with open(self._path, "r", encoding="utf-8") as f:
+                config = yaml.safe_load(f)
+            if config and isinstance(config.get("web_assets"), list):
+                return config["web_assets"]
+        except Exception:
+            pass
+        return []
+
+    def compare(
+        self,
+        template: PortfolioTemplate,
+        web_assets: Optional[List[dict]] = None,
+    ) -> ComparisonResult:
+        """
+        Compare user holdings against template.
+
+        Args:
+            template: The PortfolioTemplate to compare against.
+            web_assets: Optional list of web_asset dicts. If None, loads from
+                        config.asset.yaml automatically.
+
+        Returns:
+            ComparisonResult with diffs and estimated user metrics.
+        """
+        if web_assets is None:
+            web_assets = self.load_web_assets()
+
+        total_amount = sum(a.get("amount", 0) for a in web_assets)
+
+        # Build user category weights
+        user_category_weights: dict[str, float] = {}
+        for asset in web_assets:
+            cat, _ = _map_asset_to_category(asset)
+            w = asset.get("amount", 0) / total_amount if total_amount > 0 else 0
+            user_category_weights[cat] = user_category_weights.get(cat, 0) + w
+
+        # Build template category weights
+        template_weights: dict[str, tuple[str, float]] = {
+            a.category: (a.region, a.weight) for a in template.allocations
+        }
+
+        # Collect all categories from both sides
+        all_categories = set(user_category_weights.keys()) | set(template_weights.keys())
+
+        diffs: List[AllocationDiff] = []
+        for cat in sorted(all_categories):
+            user_w = user_category_weights.get(cat, 0.0)
+            tmpl_region, tmpl_w = template_weights.get(cat, ("", 0.0))
+            deviation = user_w - tmpl_w
+            diffs.append(AllocationDiff(
+                category=cat,
+                region=tmpl_region,
+                user_weight=round(user_w, 4),
+                template_weight=round(tmpl_w, 4),
+                deviation=round(deviation, 4),
+            ))
+
+        # Sort by absolute deviation descending for readability
+        diffs.sort(key=lambda d: abs(d.deviation), reverse=True)
+
+        user_metrics = _estimate_user_metrics(user_category_weights)
+        summary = _generate_summary(diffs, template.name)
+
+        return ComparisonResult(
+            template_id=template.id,
+            template_name=template.name,
+            user_total_amount=total_amount,
+            diffs=diffs,
+            user_metrics=user_metrics,
+            summary=summary,
+        )
