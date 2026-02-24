@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anti-FOMO | 资产配置可视化</title>
+    <title>Anti-FOMO | 资产配置认知工具</title>
     <link rel="stylesheet" href="style.css">
+    <!-- Chart.js via CDN for radar/bar/pie charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 </head>
 <body>
     <div class="app">
@@ -14,10 +16,19 @@
                 <span class="header-logo">&#9678;</span>
                 <h1>Anti-FOMO</h1>
             </div>
-            <p class="header-sub">资产配置可视化监控</p>
+            <!-- Top-level view navigation -->
+            <nav class="view-nav" id="view-nav">
+                <button class="view-tab active" data-view="portfolio">我的配置</button>
+                <button class="view-tab" data-view="templates">模板库</button>
+                <button class="view-tab" data-view="compare">配置对比</button>
+            </nav>
+            <p class="header-sub">资产配置认知工具</p>
         </header>
 
-        <main class="main">
+        <!-- ============================================================
+             VIEW: 我的配置 (original portfolio view)
+             ============================================================ -->
+        <main class="main view-panel active" id="view-portfolio">
             <!-- Sidebar: Input Area -->
             <aside class="sidebar">
                 <div class="panel">
@@ -119,8 +130,85 @@
                 <div class="detail-bar" id="detail-bar"></div>
             </section>
         </main>
+
+        <!-- ============================================================
+             VIEW: 模板库
+             ============================================================ -->
+        <main class="main view-panel" id="view-templates">
+            <div class="templates-layout">
+                <div class="templates-header-row">
+                    <h2 class="section-title">配置模板库</h2>
+                    <p class="section-desc">6 个经典资产配置策略，了解不同投资思路的量化特征与性格画像</p>
+                    <div class="metrics-disclaimer">
+                        数据来源：2010-2024 历史模拟回测，仅供认知参考，不构成投资建议
+                    </div>
+                </div>
+                <div class="templates-grid" id="templates-grid">
+                    <div class="templates-loading">加载模板中...</div>
+                </div>
+            </div>
+        </main>
+
+        <!-- ============================================================
+             VIEW: 配置对比
+             ============================================================ -->
+        <main class="main view-panel" id="view-compare">
+            <div class="compare-layout">
+                <!-- Left: template selector + AI panel -->
+                <aside class="compare-sidebar">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <span class="panel-indicator"></span>
+                            选择对比模板
+                        </div>
+                        <div class="panel-body">
+                            <select class="compare-select" id="compare-template-select">
+                                <option value="">-- 请选择模板 --</option>
+                            </select>
+                            <button class="btn btn-primary" id="btn-run-compare">开始对比</button>
+                        </div>
+                    </div>
+
+                    <!-- AI personality match -->
+                    <div class="panel panel-ai">
+                        <div class="panel-header">
+                            <span class="panel-indicator panel-indicator-ai"></span>
+                            AI 性格分析
+                        </div>
+                        <div class="panel-body">
+                            <p class="ai-hint">基于当前配置，分析你的投资性格并推荐匹配模板</p>
+                            <button class="btn btn-ai" id="btn-ai-match">分析我的性格</button>
+                            <div class="ai-result" id="ai-match-result"></div>
+                        </div>
+                    </div>
+
+                    <!-- AI migration advice -->
+                    <div class="panel panel-ai" id="panel-ai-migrate" style="display:none">
+                        <div class="panel-header">
+                            <span class="panel-indicator panel-indicator-ai"></span>
+                            AI 迁移建议
+                        </div>
+                        <div class="panel-body">
+                            <button class="btn btn-ai" id="btn-ai-migrate">获取迁移建议</button>
+                            <div class="ai-result" id="ai-migrate-result"></div>
+                        </div>
+                    </div>
+                </aside>
+
+                <!-- Right: comparison results -->
+                <section class="compare-display" id="compare-display">
+                    <div class="compare-empty">
+                        <div class="compare-empty-icon">&#9635;</div>
+                        <p>在左侧选择一个模板，开始与当前配置进行对比</p>
+                    </div>
+                </section>
+            </div>
+        </main>
     </div>
 
     <script src="app.js"></script>
+    <script src="charts.js"></script>
+    <script src="templates.js"></script>
+    <script src="compare.js"></script>
 </body>
 </html>

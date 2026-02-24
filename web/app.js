@@ -769,4 +769,31 @@ async function init() {
     });
 }
 
-document.addEventListener("DOMContentLoaded", init);
+// ============================================================
+//  View Navigation (v2)
+// ============================================================
+
+function initViewNav() {
+    const tabs = document.querySelectorAll(".view-tab");
+    const panels = document.querySelectorAll(".view-panel");
+
+    tabs.forEach(tab => {
+        tab.addEventListener("click", () => {
+            const view = tab.dataset.view;
+            tabs.forEach(t => t.classList.remove("active"));
+            panels.forEach(p => p.classList.remove("active"));
+            tab.classList.add("active");
+            const panel = document.getElementById("view-" + view);
+            if (panel) panel.classList.add("active");
+        });
+    });
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
+    initViewNav();
+    await init();
+
+    // v2 feature initialisation (defined in templates.js / compare.js)
+    if (typeof initTemplatesView === "function") initTemplatesView();
+    if (typeof initCompareView === "function") initCompareView();
+});
