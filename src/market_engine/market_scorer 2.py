@@ -144,45 +144,34 @@ class MarketScorer:
 
     def _evaluate_index(self, idx_cfg: IndexConfig) -> Optional[IndexValuation]:
         """评估单个指数"""
-        try:
-            pe_df = self.fetcher.fetch_pe(idx_cfg.symbol)
-            pb_df = self.fetcher.fetch_pb(idx_cfg.symbol)
+        pe_df = self.fetcher.fetch_pe(idx_cfg.symbol)
+        pb_df = self.fetcher.fetch_pb(idx_cfg.symbol)
 
-            if pe_df.empty or pb_df.empty:
-                print(f"  {idx_cfg.symbol}: 数据不完整, 跳过")
-                return None
-
-            pe_series = pe_df["滚动市盈率"].dropna()
-            pb_series = pb_df["市净率"].dropna()
-
-            if pe_series.empty or pb_series.empty:
-                print(f"  {idx_cfg.symbol}: 有效数据为空 (全为 NaN), 跳过")
-                return None
-
-            pe_current = float(pe_series.iloc[-1])
-            pb_current = float(pb_series.iloc[-1])
-
-            pe_pct = self.percentile.calculate_with_window(
-                pe_df, "日期", "滚动市盈率", pe_current, years=self.window_years
-            )
-            pb_pct = self.percentile.calculate_with_window(
-                pb_df, "日期", "市净率", pb_current, years=self.window_years
-            )
-
-            score = (pe_pct + pb_pct) / 2
-
-            return IndexValuation(
-                symbol=idx_cfg.symbol,
-                name=idx_cfg.symbol,
-                pe_ttm=pe_current,
-                pb=pb_current,
-                pe_percentile=pe_pct,
-                pb_percentile=pb_pct,
-                score=score,
-            )
-        except Exception as e:
-            print(f"  {idx_cfg.symbol}: 评估失败 ({e}), 跳过")
+        if pe_df.empty or pb_df.empty:
+            print(f"  {idx_cfg.symbol}: 数据不完整, 跳过")
             return None
+
+        pe_current = float(pe_df["滚动市盈率"].iloc[-1])
+        pb_current = float(pb_df["市净率"].iloc[-1])
+
+        pe_pct = self.percentile.calculate_with_window(
+            pe_df, "日期", "滚动市盈率", pe_current, years=self.window_years
+        )
+        pb_pct = self.percentile.calculate_with_window(
+            pb_df, "日期", "市净率", pb_current, years=self.window_years
+        )
+
+        score = (pe_pct + pb_pct) / 2
+
+        return IndexValuation(
+            symbol=idx_cfg.symbol,
+            name=idx_cfg.symbol,
+            pe_ttm=pe_current,
+            pb=pb_current,
+            pe_percentile=pe_pct,
+            pb_percentile=pb_pct,
+            score=score,
+        )
 
     def _compute_composite(self, valuations: Dict[str, IndexValuation]) -> float:
         """加权平均计算综合评分"""
