@@ -214,7 +214,8 @@ function renderMetricsDelta(tbodyId, userM, tmplM) {
             tmplVal: tmplM.max_drawdown,
             fmt: v => v.toFixed(1) + "%",
             diffFmt: d => (d >= 0 ? "+" : "−") + Math.abs(d).toFixed(1) + "%",
-            higherIsBetter: false,   // more negative = worse
+            // max_drawdown is negative; user closer to zero (diff > 0) is better
+            higherIsBetter: true,
         },
         {
             label: "夏普比率",

@@ -285,6 +285,9 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             Comparator = _get_comparator()
             comparator = Comparator()
             web_assets = body.get("web_assets")  # optional; if absent, load from file
+            if web_assets is not None and not isinstance(web_assets, list):
+                self._json_response(400, {"error": "web_assets must be a JSON array"})
+                return
             result = comparator.compare(template, web_assets=web_assets)
 
             response = {
