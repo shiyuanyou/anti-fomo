@@ -77,20 +77,50 @@ python3 scripts/calc_template_metrics.py  # compute real metrics, write base_dat
 
 ## Build / Lint / Test
 
-There is no formal build system, linter, or unit test suite yet.
-
-- Build: N/A
-- Lint: N/A
-- Test: N/A
-
-If you add tests, place them in a `tests/` folder and provide a way to run
-a single test:
-
+### Linting and Formatting
 ```bash
-pytest tests/test_x.py::test_name
+# Format code with ruff
+ruff format .
+
+# Check linting issues
+ruff check .
+
+# Fix auto-fixable linting issues
+ruff check --fix .
+
+# Type checking with mypy (if installed)
+mypy src/ --ignore-missing-imports
 ```
 
-Keep tests deterministic -- mock network calls (`akshare`) and LLM APIs.
+### Testing
+There is no formal unit test suite yet. When adding tests:
+
+1. Place tests in a `tests/` folder
+2. Use pytest as test runner
+3. Mock external dependencies (akshare, OpenAI API)
+
+```bash
+# Run all tests
+pytest
+
+# Run a specific test file
+pytest tests/test_portfolio.py
+
+# Run a single test
+pytest tests/test_portfolio.py::test_portfolio_creation
+
+# Run with coverage
+pytest --cov=src --cov-report=html
+```
+
+### Development Commands
+```bash
+# Install development dependencies
+pip install ruff pytest pytest-cov mypy
+
+# Run all checks before committing
+ruff format . && ruff check . && mypy src/ --ignore-missing-imports
+```
 
 ## Configuration Files
 
