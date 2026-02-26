@@ -10,12 +10,18 @@ Anti-FOMO 是一个**认知启蒙型工具**，而非智能投顾或交易辅助
 
 ## 功能概览
 
-### Web 资产配置 UI（v2 主战场）
+### Web 资产配置 UI（v2，已完成）
 
 - **配置模板库** — 提供多个经典资产配置模板（全球均衡、A股核心、全天候防御等），附带量化指标（预计年化、波动率、最大回撤、夏普比）和性格画像
 - **模板性格匹配** — AI 辅助分析，帮助用户找到与自身认知和风险偏好匹配的模板
 - **配置对比** — 用户当前持仓 vs. 选定模板的可视化 1v1 对比（雷达图/条形图），直观展示超配/低配偏离
 - **迁移建议** — AI 提供方向性的资产配置调整思路（非买卖指令）
+
+### 真实历史指标数据层（v3，进行中）
+
+- **代理指数拉取** — 通过 akshare 获取各资产类别对应代理指数的真实历史行情（2010 至今）
+- **真实指标计算** — 用加权组合收益率序列计算年化收益、最大回撤、波动率、夏普比，替换原有经验估算值
+- **本地数据缓存** — 结果持久化到 `base_datas/`，启动时自动加载，无网络依赖
 
 ### 后端监控管道（v1，保持可用）
 
@@ -45,6 +51,17 @@ python3 serve.py
 4. 获取 AI 迁移建议
 
 这会生成 `config.asset.yaml`，作为持仓的唯一数据来源。
+
+### 更新真实历史指标（v3，可选）
+
+首次运行或需要更新数据时执行：
+
+```bash
+python3 scripts/fetch_index_data.py        # 拉取代理指数历史行情（约 2-5 分钟）
+python3 scripts/calc_template_metrics.py   # 计算模板真实指标（约 5 秒）
+```
+
+计算结果存入 `base_datas/`，下次启动 `serve.py` 自动加载。若 `base_datas/` 不存在，自动退回内置经验估算值。
 
 ### 运行波动监控（可选，v1 功能）
 
@@ -87,7 +104,7 @@ anti-fomo/
 ├── requirements.txt              # Python 依赖
 ├── src/
 │   ├── main.py                   # 主程序 AntiFOMO 编排器
-│   ├── template_engine/          # v2 新增：模板库、对比引擎、AI 顾问
+│   ├── template_engine/          # v2：模板库、对比引擎、AI 顾问
 │   ├── portfolio_engine/         # 持仓数据获取、波动率计算、阈值告警
 │   ├── market_engine/            # PE/PB 估值、市场评分
 │   ├── decision_engine/          # 看盘判断、再平衡检测
@@ -95,18 +112,22 @@ anti-fomo/
 │   ├── ai_engine/                # AI 分析（OpenAI 兼容）
 │   ├── notification/             # 多渠道通知
 │   └── asset_configurator.py     # Legacy CLI 向导（已由 serve.py 取代）
+├── scripts/
+│   ├── fetch_index_data.py       # v3：akshare 拉取代理指数历史行情
+│   └── calc_template_metrics.py  # v3：计算模板真实历史指标
+├── base_datas/                   # v3：计算结果（gitignored，由脚本生成）
 ├── web/                          # Web 前端（零构建工具 SPA）
 ├── docs/                         # 开发文档
 │   ├── v1-dev-wiki.md            # v1 实现状态记录
 │   ├── v2-dev-wiki.md            # v2 开发计划与约定
-│   └── anti-fomo核心.md          # 产品第一性原理讨论记录
+│   └── v3-dev-wiki.md            # v3 数据层开发计划与约定
 └── logs/                         # 运行日志
 ```
 
 ## 依赖项
 
-- `akshare` — A 股市场数据
-- `pandas` / `numpy` — 数据处理
+- `akshare` — A 股及全球市场数据
+- `pandas` / `numpy` — 数据处理与指标计算
 - `pyyaml` — 配置解析
 - `schedule` — 定时调度
 - `openai` — AI 分析（可选）
@@ -114,7 +135,7 @@ anti-fomo/
 ## 注意事项
 
 - 数据来源为 akshare，需要网络连接
-- 量化指标（年化收益、夏普比等）基于历史数据模拟，仅供认知参考，不构成投资建议
+- 量化指标（年化收益、夏普比等）基于历史真实数据计算（v3 运行后），或经验估算（fallback），仅供认知参考，不构成投资建议
 - AI 建议仅供参考，不构成投资建议
 - 建议在交易日收盘后运行波动检查，以获取最新数据
 

@@ -11,10 +11,14 @@ The core insight: most users lack a global view of their own asset allocation.
 "Seeing" their portfolio clearly — and comparing it against proven templates —
 is more valuable than any real-time alert or AI trading suggestion.
 
-**v2 focus**: `serve.py` + `web/` — a major upgrade to the Web configuration UI,
-adding template library, metrics comparison, personality matching, and AI migration
-advice. The v1 backend monitoring pipeline (`run.py`) is kept functional but is
-not the development priority.
+**v2** (complete): `serve.py` + `web/` — Web configuration UI with template library,
+1v1 comparison, personality matching, and AI migration advice (F1–F5 shipped).
+
+**v3 focus** (active): replace hard-coded template metrics with real historical data.
+Scripts in `scripts/` pull proxy-index history via akshare, compute annualised return /
+volatility / max drawdown / Sharpe, persist to `base_datas/`, and feed
+`src/template_engine/` at startup. The v1 backend pipeline (`run.py`) is kept
+functional but is not the development priority.
 
 ## Architecture
 
@@ -43,6 +47,10 @@ run.py -> src/main.py (AntiFOMO)
 serve.py -> web/ (static SPA) -> config.asset.yaml (generated)
          -> src/template_engine/ (v2 new: TemplateLibrary, TemplateComparator)
          -> src/ai_engine/template_advisor.py (v2 new: personality match + migration advice)
+
+scripts/fetch_index_data.py    -> base_datas/index_weekly.csv  (v3 new)
+scripts/calc_template_metrics.py -> base_datas/template_metrics.json (v3 new)
+                                 -> base_datas/index_metrics.json    (v3 new)
 ```
 
 Notes:
@@ -63,6 +71,8 @@ python3 serve.py                       # web UI at http://localhost:8080
 python3 run.py                         # single daily check (v1)
 python3 run.py weekly                  # generate weekly report immediately (v1)
 python3 run.py schedule                # daily scheduler + weekly report on Fridays (v1)
+python3 scripts/fetch_index_data.py    # pull proxy-index history via akshare (v3)
+python3 scripts/calc_template_metrics.py  # compute real metrics, write base_datas/ (v3)
 ```
 
 ## Build / Lint / Test
@@ -91,6 +101,7 @@ Keep tests deterministic -- mock network calls (`akshare`) and LLM APIs.
 | `config.example.yaml` | Example config for new users. |
 | `docs/v1-dev-wiki.md` | v1 implementation status, data structures, tech debt. |
 | `docs/v2-dev-wiki.md` | v2 development plan, new module contracts, build order. Read this before starting v2 features. |
+| `docs/v3-dev-wiki.md` | v3 development plan: real historical metrics, proxy-index mapping, data pipeline. Read this before starting v3 features. |
 
 Environment variables (preferred for secrets):
 - `OPENAI_API_KEY` or `AI_API_KEY`
@@ -119,11 +130,11 @@ These are different fields used by different APIs. Do not conflate them.
 `src/main.py:AntiFOMO` is the sole orchestrator for the v1 pipeline. New v1 features
 should be added as engine methods and wired up in `run_check()` or `run_weekly_report()`.
 
-### v2 Engines (new, active development)
+### v2 Engines (complete, do not modify core logic)
 
 | Engine | Input | Output |
 |--------|-------|--------|
-| `template_engine/templates.py` | static data | `List[PortfolioTemplate]` |
+| `template_engine/templates.py` | static data + optional `base_datas/template_metrics.json` | `List[PortfolioTemplate]` |
 | `template_engine/comparator.py` | user holdings + `PortfolioTemplate` | `ComparisonResult` (diffs, metrics delta) |
 | `ai_engine/template_advisor.py` | user holdings + template | `str` (personality match or migration advice) |
 
@@ -133,6 +144,17 @@ New `serve.py` API endpoints (v2):
 - `POST /api/compare` — user config vs. template comparison
 - `POST /api/ai/profile-match` — AI personality matching (optional)
 - `POST /api/ai/migrate` — AI migration advice
+
+### v3 Data Pipeline (new, active development)
+
+| Script | Input | Output |
+|--------|-------|--------|
+| `scripts/fetch_index_data.py` | akshare APIs | `base_datas/index_weekly.csv` |
+| `scripts/calc_template_metrics.py` | `index_weekly.csv` | `base_datas/template_metrics.json`, `base_datas/index_metrics.json` |
+
+`templates.py` loads `template_metrics.json` at startup to override hard-coded values.
+`comparator.py` loads `index_metrics.json` to replace hard-coded `_CATEGORY_RETURN` / `_CATEGORY_VOL` dicts.
+Both fall back gracefully to hard-coded values if `base_datas/` files are absent.
 
 ## Code Style Guidelines
 
@@ -240,6 +262,20 @@ New `serve.py` API endpoints (v2):
 - `TemplateComparator` reads user holdings from `config.asset.yaml`; it must not
   call akshare or any live data source.
 
+### v3 Data Pipeline
+
+- `scripts/fetch_index_data.py` and `scripts/calc_template_metrics.py` are offline,
+  on-demand scripts. They are never imported by `serve.py` or `run.py`.
+- Output files live in `base_datas/` (gitignored). Both `templates.py` and
+  `comparator.py` fall back to hard-coded values when these files are absent.
+- `index_global_hist_em` returns a column named `最新价` (not `收盘`); rename it
+  before merging with domestic index data.
+- Wrap every akshare call in try/except; print a warning and skip on failure.
+- `短期债券` and `货币基金` have no index proxy — simulate with fixed annual
+  constants (2.5% and 2.0% respectively); vol = 0, drawdown = 0.
+- Use weekly (Friday close) aggregation for all index series. Daily granularity
+  is not needed for template-level metrics.
+
 ### Frontend (v2)
 
 - `web/` remains a zero-build-tool vanilla HTML/CSS/JS SPA. No React, Vue, or
@@ -269,4 +305,6 @@ New `serve.py` API endpoints (v2):
 python3 serve.py          # open browser, verify template library and compare views
 python3 run.py            # confirm v1 daily check still completes with DailyDigest output
 python3 run.py weekly     # confirm weekly report generates and saves to logs/
+python3 scripts/fetch_index_data.py        # verify akshare interfaces are reachable
+python3 scripts/calc_template_metrics.py   # verify metrics output to base_datas/
 ```
