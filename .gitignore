@@ -42,6 +42,9 @@ logs/
 data/
 cache/
 
+# v3 generated data files (run scripts/fetch_index_data.py and calc_template_metrics.py to regenerate)
+base_datas/
+
 # Jupyter
 .ipynb_checkpoints/
 *.ipynb

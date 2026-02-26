@@ -137,6 +137,7 @@ function renderCompareResult(result) {
                     <canvas id="chart-metrics"></canvas>
                 </div>
                 <p class="metrics-note">注：最大回撤取绝对值显示；夏普比率乘以10以便与其他指标同轴展示</p>
+                <p class="metrics-data-source" id="metrics-data-source"></p>
             </div>
         </div>
 
@@ -169,6 +170,13 @@ function renderCompareResult(result) {
             .then(tmpl => {
                 renderMetricsChart("chart-metrics", result.user_metrics, tmpl.metrics, tmpl.name);
                 renderMetricsDelta("metrics-delta-body", result.user_metrics, tmpl.metrics);
+                // D5: show data source label for template metrics
+                const srcEl = document.getElementById("metrics-data-source");
+                if (srcEl && tmpl.metrics && tmpl.metrics.data_period) {
+                    const isReal = tmpl.metrics.data_period.includes("真实");
+                    srcEl.textContent = `模板指标数据来源：${tmpl.metrics.data_period}`;
+                    srcEl.className = "metrics-data-source " + (isReal ? "data-period-real" : "data-period-est");
+                }
             })
             .catch(() => {
                 // Non-critical: metrics chart just won't render

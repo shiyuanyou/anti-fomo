@@ -96,7 +96,7 @@ function renderTemplateCard(tmpl) {
         </div>
 
         <div class="tcard-footer">
-            <span class="data-period">${m.data_period}</span>
+            <span class="data-period ${m.data_period.includes('真实') ? 'data-period-real' : 'data-period-est'}">${m.data_period}</span>
             <button class="btn btn-compare-from-card" data-id="${tmpl.id}">
                 与我的配置对比
             </button>
