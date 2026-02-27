@@ -1,53 +1,50 @@
 # AGENTS.md
 
-This repository is a Python app for asset allocation awareness and anti-FOMO portfolio monitoring. The guidance below is for agentic coding tools working in this repo.
+This repository is a Python + Vue 3 app for asset allocation awareness and anti-FOMO portfolio monitoring. The guidance below is for agentic coding tools working in this repo.
 
 ## 1. Product & Architecture Context
 
 Anti-FOMO is a **cognitive awareness tool**, not an auto-trading bot.
 
 ### Core Entry Points
-1. **`run.py`** -- CLI for portfolio monitoring (v1). Stable.
-2. **`api/`** -- **NEW in v3.3**: FastAPI backend with layered architecture.
-   - `api/app/main.py` -- Application factory
-   - `api/routers/` -- API route handlers (templates, shares, assets)
-   - `api/models/` -- SQLAlchemy database models
-   - `api/schemas/` -- Pydantic request/response schemas
-   - `api/crud/` -- Database CRUD operations
-3. **`scripts/`** -- Offline data pipelines and database initialization.
+1. **`run.py`** — CLI for portfolio monitoring (v1). Stable, do not break.
+2. **`api/`** — FastAPI backend (v3.3+) with layered architecture:
+   - `api/app/main.py` — Application factory (`create_app()`)
+   - `api/main.py` — Uvicorn entry point
+   - `api/routers/` — Route handlers: `assets.py`, `templates.py`, `shares.py`
+   - `api/models/` — SQLAlchemy ORM models (`Template`, `Share`)
+   - `api/schemas/` — Pydantic request/response schemas
+   - `api/crud/` — Database CRUD operations (only place that touches SQLite)
+   - `api/services/` — Business logic layer (compare, AI, shares)
+3. **`web/`** — Vue 3 + Vite + TypeScript frontend (v3.3+)
+4. **`web-legacy/`** — Original vanilla JS demo. Read-only reference; do not modify.
+5. **`scripts/`** — Offline data pipelines and one-shot DB initialization utilities.
 
-### Legacy Code (v2/v3 - Backup Only)
-- `serve_legacy.py.bak` -- Old HTTP server (backed up, do not use)
-- `src/template_engine/templates_legacy.py.bak` -- Old hardcoded templates (backed up)
-- `scripts/migrate_templates_legacy.py.bak` -- Old migration script (backed up)
+### Legacy / Backup Files (do not use or modify)
+- `serve_legacy.py.bak`, `src/template_engine/templates_legacy.py.bak` — backed-up old code
 
-**v3.3 Refactor**: All template data now lives in database, matching `templates.json` format.
+### Frontend Dual-Mode Architecture
+`web/` builds in two modes controlled by `VITE_APP_MODE`:
+- **Local Mode** (`npm run build:local`, `.env.local`): Pinia store uses `LocalStorageStrategy` — reads `GET /api/assets`, writes `POST /api/save` to backend YAML.
+- **Cloud Mode** (`npm run build:cloud`, `.env.cloud`): Pinia store uses `CloudStorageStrategy` — reads/writes `localStorage`. Templates and shares via `/api/templates` and `/api/shares`.
 
-### Frontend Context (v3+)
-The `web/` directory uses **Vue 3 + Vite + TypeScript**. It operates in two modes:
-- **Local Mode** (`.env.local`): Reads/writes to backend `config.asset.yaml` via `/api/assets`
-- **Cloud Mode** (`.env.cloud`): Reads/writes browser `localStorage`, uses `/api/templates` and `/api/shares` for sharing
-
-**v3.3 Architecture Change**: Frontend is now pure static files served by Nginx. Backend is separate FastAPI service on port 8000. Frontend calls `https://anti-fomo.yoyoostone.cn/api/*` in production.
-
-### Database Context (v3.3+)
-- **SQLite** for official templates (`templates` table) and user shares (`shares` table)
-- **SQLAlchemy ORM** for database operations, **Alembic** for migrations
-- Single file: `anti-fomo.db` in project root
-- **Migration path**: Can switch to PostgreSQL by changing DB URL in `api/database.py` with zero code changes
+### Database (v3.3+)
+- **SQLite** (`anti-fomo.db` in project root) — do not commit this file.
+- Tables: `templates` (official allocations), `shares` (user-exported configs).
+- ORM only: never write raw SQL in route handlers. All DB access via `api/crud/`.
+- Migration path to PostgreSQL: change `DATABASE_URL` in `api/models/database.py` — zero code changes needed.
 
 ---
 
 ## 2. Build, Lint, and Test Commands
 
-### Python Backend (src/ and api/)
-We use `ruff` for linting/formatting, `mypy` for typing, and `pytest` for testing.
+### Python Backend
 
 ```bash
-# Install dependencies (v3.3+)
+# Install dependencies
 pip install -r requirements.txt
 
-# Format and lint code
+# Format and lint
 ruff format .
 ruff check --fix .
 
@@ -55,124 +52,132 @@ ruff check --fix .
 mypy src/ --ignore-missing-imports
 mypy api/ --ignore-missing-imports
 
-# Testing (Mock external dependencies like akshare/OpenAI)
-pytest                                                   # Run all tests
-pytest tests/test_portfolio.py                           # Run a specific test file
-pytest tests/test_portfolio.py::test_portfolio_creation  # Run a single test
-pytest --cov=src --cov=src --cov-report=html           # Run with coverage
+# Run all tests
+pytest
 
-# Database migrations (v3.3+)
-alembic revision --autogenerate -m "description"         # Create migration
-alembic upgrade head                                     # Apply migrations
+# Run a single test file
+pytest tests/test_portfolio.py
 
-# Run FastAPI backend (development)
-cd api
-python3 -m uvicorn api.main:app --reload --port 8000   # Auto-reload on code changes
+# Run a single test by name
+pytest tests/test_portfolio.py::test_portfolio_creation
 
-# Run FastAPI backend (production)
-python3 -m uvicorn api.main:app --host 0.0.0.0 --port 8000  # Bind to all interfaces
+# Run with coverage
+pytest --cov=src --cov=api --cov-report=html
+
+# Database migrations
+alembic revision --autogenerate -m "description"
+alembic upgrade head
+
+# Initialize DB from templates.json (first-time setup only)
+python3 scripts/init_db.py
+
+# Run FastAPI dev server (from repo root)
+python3 -m uvicorn api.main:app --reload --port 8000
 ```
 
-### Vue 3 Frontend (`web/` directory)
+### Vue 3 Frontend (`web/`)
+
 ```bash
 cd web
 npm install
 
-# Run local development server (with API proxy to localhost:8000)
-npm run dev
-
-# Build for Local Mode (reads/writes to backend config.asset.yaml)
-npm run build:local
-
-# Build for Cloud Mode (reads/writes localStorage, for Nginx/Share deployments)
-npm run build:cloud
-
-# Preview production build
-npm run preview
+npm run dev            # Dev server with proxy to localhost:8000
+npm run build:local    # Production build — Local Mode
+npm run build:cloud    # Production build — Cloud Mode
+npm run preview        # Preview the last build
 ```
 
-### Deployment Commands (v3.3+)
-```bash
-# 1. Build frontend for cloud deployment
-cd web && npm run build:cloud
-
-# 2. Initialize database (first time only)
-python3 scripts/init_db.py                             # Import templates from templates.json to SQLite
-
-# 3. Configure Nginx (copy template from docs/v3.3-architecture-lite.md)
-sudo ln -s /path/to/nginx.conf /etc/nginx/sites-enabled/anti-fomo
-sudo certbot --nginx -d anti-fomo.yoyoostone.cn       # SSL certificate
-
-# 4. Setup systemd service for FastAPI
-cp docs/anti-fomo-api.service /etc/systemd/system/
-sudo systemctl enable anti-fomo-api
-sudo systemctl start anti-fomo-api
-```
+There is **no separate test command** for the frontend; use the Vite build (`build:local`) as the compile/type-check gate. A clean build with zero errors is the acceptance criterion.
 
 ---
 
 ## 3. Code Style Guidelines
 
-### Python General
-- **Language**: Python 3.8+
-- **No Emoji**: No emojis in logs, code, comments, or commit messages. Keep output concise.
-- **Simplicity**: Favor small, readable functions over deep abstraction. Avoid unnecessary comments.
+### Python — General
+- **Python 3.8+** throughout.
+- No emojis in code, comments, logs, or commit messages.
+- Favor small, readable functions. Avoid deep abstraction or unnecessary wrapper classes.
+- Do not add comments that merely restate what the code does.
 
-### Python Imports
-- Order: Standard library -> Third-party -> Local imports.
-- Use explicit imports; no wildcards (`from module import *`).
-- Use absolute imports for cross-package references: `from portfolio_engine import Portfolio`
-- Use relative imports within same package: `from .cache import DataCache`
-- **v3.3+**: In `api/`, use `from models import Template` (no relative imports needed)
+### Python — Imports
+- Order: standard library → third-party → local. One blank line between groups.
+- Explicit imports only; no `from module import *`.
+- Absolute imports for cross-package: `from api.schemas import TemplateResponse`
+- Relative imports within the same package: `from .cache import DataCache`
 
-### Python Formatting
-- **Indentation**: 4 spaces.
-- **Quotes**: Use double quotes (`"`) for string literals and dictionary defaults.
-- **Line Length**: Max 100-120 characters.
-- **Strings**: Prefer f-strings for formatting.
+### Python — Formatting
+- 4-space indentation. Max line length 100–120 characters.
+- Double quotes `"` for string literals and dict defaults.
+- f-strings for all string interpolation; no `%` or `.format()`.
 - Do not auto-format YAML keys.
 
-### Python Types & Data Structures
-- Use type hints for all public functions and dataclass fields.
-- Prefer `Optional[T]` for nullable values.
-- Standardize on `@dataclass` for data containers; implement `__str__` if human-readable output is helpful.
-- Use Pydantic models for API request/response schemas (v3.3+, in `api/schemas.py`)
+### Python — Types
+- Type hints on all public functions and dataclass fields.
+- Use `Optional[T]` for nullable values (not `T | None` — keep 3.8 compat).
+- `@dataclass` for data containers; add `__str__` when human-readable output helps.
+- Pydantic `BaseModel` for all API request/response schemas (in `api/schemas/`).
+- SQLAlchemy models use singular nouns: `class Template(Base)`, `class Share(Base)`.
 
-### Python Naming Conventions
-- **Classes**: `CamelCase` (e.g., `AntiFOMO`, `DataFetcher`).
-- **Functions/Variables**: `snake_case`.
-- **Private Helpers**: Prefix with `_` (e.g., `_load_config`).
-- **Constants**: `UPPER_SNAKE_CASE` (e.g., `PORT`, `BASE_DIR`).
-- **Enums**: `CamelCase` class, `UPPER_SNAKE_CASE` members.
-- **Database Models**: Singular noun (e.g., `class Template(Base)`, `class Share(Base)`)
+### Python — Naming
+- Classes: `CamelCase` — `AntiFOMO`, `DataFetcher`
+- Functions/variables: `snake_case`
+- Private helpers: `_leading_underscore`
+- Constants: `UPPER_SNAKE_CASE`
+- Enums: `CamelCase` class, `UPPER_SNAKE_CASE` members
 
-### Python Error Handling
-- Prefer graceful failure. Wrap external network/API calls (like akshare or OpenAI) in `try/except` and return safe defaults (e.g., empty DataFrame, `None`).
-- Log warnings on failure rather than crashing.
-- Use `raise SystemExit(1)` only for truly fatal config errors (e.g., missing `config.asset.yaml`).
-- Use `ValueError` strictly for programmer errors (invalid arguments).
-- **FastAPI errors**: Use HTTPException for API errors: `raise HTTPException(status_code=404, detail="Template not found")`
+### Python — Error Handling
+- Wrap all external calls (akshare, OpenAI, network) in `try/except`; return safe defaults (`None`, empty list/DataFrame) and log a warning. Never crash on external failure.
+- `raise SystemExit(1)` only for fatal startup errors (missing required config file).
+- `ValueError` only for programmer errors (invalid arguments passed to a function).
+- FastAPI route errors: `raise HTTPException(status_code=404, detail="Template not found")`
 
-### State & Side Effects
-- **Config**: Only parse in `src/main.py:_load_config`. `config.asset.yaml` is the sole source of truth for holdings in Local Mode.
-- **Cache**: PE/PB data is cached in `cache/` as pickle/JSON. TTL is 24h. Always go through `ValuationFetcher`.
-- **IO**: Do not write files outside of `logs/`, `cache/`, or `base_datas/`.
-- **Database**: Only write to SQLite through SQLAlchemy ORM in `api/crud.py`. Never use raw SQL in route handlers.
-
-### Frontend Guidelines (Vue 3 + TS)
-- **Composition API**: Use Vue 3 Composition API (`<script setup lang="ts">`).
-- **State Management**: Use Pinia or abstracted composables to handle the Local vs. Cloud dual-mode logic cleanly.
-- **Styling**: Scoped CSS within Vue components. Maintain the existing visual aesthetic (dark/light theme, Chart.js).
-- **Network**: Use standard `fetch` API. Do not introduce Axios unless absolutely necessary.
-- **Environment Variables**: Use `import.meta.env.VITE_API_BASE_URL` for API base URL (differs between local/cloud modes)
+### Python — State & Side Effects
+- `config.asset.yaml` is the sole source of truth for holdings in Local Mode. Only read/write via `api/routers/assets.py`.
+- Cache files live in `cache/` (pickle/JSON, 24 h TTL). Always go through `ValuationFetcher`.
+- File IO: only write inside `logs/`, `cache/`, or `base_datas/`.
+- Database: all writes through SQLAlchemy ORM in `api/crud/`. No raw SQL anywhere.
 
 ---
 
-## 4. Repository Conventions
+## 4. Frontend Guidelines (Vue 3 + TypeScript)
 
-- No Cursor or Copilot rule files are present. Do not look for them.
-- Keep `config.yaml` free of secrets and free of portfolio holdings.
-- **v3.3+**: Keep `anti-fomo.db` in `.gitignore` (SQLite database should not be committed)
-- Several files in `src/` have iCloud conflict duplicates named `"<name> 2.py"`. These are never imported and should be ignored; do not edit or create files with space-and-number suffixes.
-- **Migration scripts**: Place in `scripts/` directory, single-run utilities for data migration
-- **API documentation**: FastAPI auto-generates docs at `/docs` (Swagger UI) and `/redoc` (ReDoc)
+### Component Authoring
+- Use `<script setup lang="ts">` (Composition API). No Options API.
+- Scoped CSS inside `.vue` files for component-specific styles. Global styles in `web/src/assets/style.css`.
+- Do **not** duplicate CSS classes from `style.css` in scoped blocks — check the global file first.
+- All CSS variables are defined in `style.css :root`. Use those names (`--bg-primary`, `--accent`, `--text-secondary`, etc.). Never invent new variable names like `--panel-bg` or `--bg-color`.
+
+### State Management (Pinia — `configStore`)
+- The single store (`web/src/store/configStore.ts`) uses a **strategy pattern** for dual-mode storage.
+- `loadConfig()` has a `_loaded` guard — it executes only once per session. Calling it again is a no-op.
+- `setAssets()` sets `_loaded = true` to prevent subsequent `loadConfig()` calls (e.g., on route navigation) from overwriting freshly set in-memory state. This is intentional — preserve it.
+- `saveStatus` values are `'idle' | 'success' | 'error'`. CSS expects `save-ok` / `save-err` class names; map with a computed property, do not change the store's internal values.
+
+### Shared Utilities
+- `web/src/utils/index.ts` exports: `formatAmount()`, `PALETTE`, `ALLOC_PALETTE`, `RISK_COLORS`.
+- **Never copy-paste these into components.** Import from `@/utils`.
+- `PALETTE` and `ALLOC_PALETTE` must stay identical across treemap blocks and detail chips — both sort by value descending, so color indices match automatically.
+
+### Types (`web/src/types/index.ts`)
+- `Template` has **both** `allocations: AllocationItem[]` (detailed, with `region` per item) and `allocation: Record<string, number> | null` (simplified dict, values in %). Prefer `allocations` when `region` data is needed (e.g., `copyTemplate`).
+- Do not use `any` for API responses that have known shapes — extend the type interfaces instead.
+
+### Chart.js Usage
+- `ChartBar.vue` uses `chartjs-plugin-datalabels` via **local registration** (`plugins: [ChartDataLabels]` inside `new Chart()`). Do not call `Chart.register(ChartDataLabels)` globally — it pollutes all chart instances.
+- Always `destroy()` a chart instance before re-creating it.
+
+### Networking
+- Use the standard `fetch` API. Do not introduce Axios.
+- All API paths are relative (`/api/...`). The Vite dev proxy forwards them to `localhost:8000`.
+
+---
+
+## 5. Repository Conventions
+
+- **No Cursor or Copilot rule files** — do not look for `.cursor/` or `.github/copilot-instructions.md`.
+- `anti-fomo.db` is in `.gitignore`. Do not commit it.
+- `web-legacy/` is read-only reference code (original vanilla JS demo). It is the design authority for UI interactions and visual style. When in doubt about intended UX, check the corresponding file there.
+- Files in `src/` named `"<name> 2.py"` are iCloud sync duplicates. Ignore them; never import or edit them.
+- Migration/init scripts go in `scripts/`. They are one-shot utilities, not part of the regular server.
+- FastAPI auto-generates docs at `http://localhost:8000/docs` (Swagger) and `/redoc` (ReDoc).
+- Commit messages: lowercase imperative, no emoji, no period. Example: `fix template copy missing region field`
