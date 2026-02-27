@@ -53,3 +53,15 @@ anti-fomo.db
 *.ipynb
 drawio/.*.drawio.bkp
 config.asset.yaml
+docs/outdated/.gitkeep
+docs/outdated/v1-dev-wiki.md
+docs/outdated/v2-dev-wiki.md
+docs/outdated/v3-dev-wiki.md
+docs/outdated/v3.3-architecture-lite.md
+docs/outdated/v3.3-architecture-review.md
+docs/outdated/v3.3-dev-completion.md
+docs/outdated/v3.3-prd-lite.md
+docs/outdated/v3.3-refactor-completion.md
+docs/outdated/v3.5-dev-wiki.md
+docs/outdated/v1/v1-architecture.md
+docs/outdated/v1/v1-goal.md
