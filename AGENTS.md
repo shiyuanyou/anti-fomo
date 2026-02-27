@@ -46,7 +46,6 @@ We use `ruff` for linting/formatting, `mypy` for typing, and `pytest` for testin
 ```bash
 # Install dependencies (v3.3+)
 pip install -r requirements.txt
-pip install fastapi uvicorn sqlalchemy alembic
 
 # Format and lint code
 ruff format .
