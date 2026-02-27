@@ -85,7 +85,14 @@ export const useConfigStore = defineStore('config', () => {
   const isSaving = ref(false);
   const saveStatus = ref<'idle' | 'success' | 'error'>('idle');
 
+  // Guard: prevent loadConfig from overwriting in-memory state set by setAssets()
+  // or a previous loadConfig() call within the same session.
+  let _loaded = false;
+
   async function loadConfig() {
+    if (_loaded) return;
+    _loaded = true;
+
     const config = await strategy.load();
     if (config && config.portfolio && Array.isArray(config.portfolio.holdings)) {
       // Add local IDs to assets for v-for tracking
@@ -142,12 +149,15 @@ export const useConfigStore = defineStore('config', () => {
     }
   }
 
-  // Clear all assets (useful for "Copy this template" feature later)
+  // Replace all assets (e.g. "Copy template" flow).
+  // Mark _loaded = true so the next loadConfig() call (triggered by PortfolioView mount)
+  // does not overwrite the freshly set assets with stale remote data.
   function setAssets(newAssets: Omit<Asset, 'id'>[]) {
     assets.value = newAssets.map(a => ({
       ...a,
       id: crypto.randomUUID()
     }));
+    _loaded = true;
   }
 
   return {

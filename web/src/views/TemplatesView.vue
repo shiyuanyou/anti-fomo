@@ -251,15 +251,33 @@ const getPieData = (t: Template) => {
 
 const copyTemplate = (t: Template) => {
   if (confirm(`这将会覆盖你当前的配置。\n确定要复制【${t.name}】吗？`)) {
-    const segs = allocSegments(t);
-    const newAssets = segs.map(seg => ({
-      name: `${seg.category}资产`,
-      code: '',
-      amount: (seg.pct / 100) * 100000,
-      type: seg.category,
-      region: '全球',
-      style: '无'
-    }));
+    // Prefer the detailed allocations list (has region per item).
+    // Fall back to the simple allocation dict when allocations is empty.
+    const BASE_AMOUNT = 100000;
+
+    let newAssets: Omit<import('@/types').Asset, 'id'>[];
+
+    if (t.allocations && t.allocations.length > 0) {
+      newAssets = t.allocations.map(a => ({
+        name: `${a.category}（${a.region}）`,
+        code: '',
+        amount: Math.round(a.weight * BASE_AMOUNT),
+        type: a.category,
+        region: a.region,
+        style: '无'
+      }));
+    } else if (t.allocation) {
+      newAssets = Object.entries(t.allocation).map(([category, pct]) => ({
+        name: `${category}资产`,
+        code: '',
+        amount: Math.round((pct / 100) * BASE_AMOUNT),
+        type: category,
+        region: '全球',
+        style: '无'
+      }));
+    } else {
+      return;
+    }
 
     store.setAssets(newAssets);
 
