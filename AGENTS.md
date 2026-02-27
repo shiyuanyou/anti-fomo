@@ -8,9 +8,20 @@ Anti-FOMO is a **cognitive awareness tool**, not an auto-trading bot.
 
 ### Core Entry Points
 1. **`run.py`** -- CLI for portfolio monitoring (v1). Stable.
-2. **`serve.py`** -- Legacy HTTP server for web UI (v2/v3). To be replaced by FastAPI in v3.3.
-3. **`api/`** -- **NEW in v3.3**: FastAPI backend serving `/api/*` routes for both local and cloud modes.
-4. **`scripts/`** -- Offline data pipelines (pulling index history via akshare).
+2. **`api/`** -- **NEW in v3.3**: FastAPI backend with layered architecture.
+   - `api/app/main.py` -- Application factory
+   - `api/routers/` -- API route handlers (templates, shares, assets)
+   - `api/models/` -- SQLAlchemy database models
+   - `api/schemas/` -- Pydantic request/response schemas
+   - `api/crud/` -- Database CRUD operations
+3. **`scripts/`** -- Offline data pipelines and database initialization.
+
+### Legacy Code (v2/v3 - Backup Only)
+- `serve_legacy.py.bak` -- Old HTTP server (backed up, do not use)
+- `src/template_engine/templates_legacy.py.bak` -- Old hardcoded templates (backed up)
+- `scripts/migrate_templates_legacy.py.bak` -- Old migration script (backed up)
+
+**v3.3 Refactor**: All template data now lives in database, matching `templates.json` format.
 
 ### Frontend Context (v3+)
 The `web/` directory uses **Vue 3 + Vite + TypeScript**. It operates in two modes:
@@ -57,10 +68,10 @@ alembic upgrade head                                     # Apply migrations
 
 # Run FastAPI backend (development)
 cd api
-uvicorn main:app --reload --port 8000                  # Auto-reload on code changes
+python3 -m uvicorn api.main:app --reload --port 8000   # Auto-reload on code changes
 
 # Run FastAPI backend (production)
-uvicorn main:app --host 0.0.0.0 --port 8000            # Bind to all interfaces
+python3 -m uvicorn api.main:app --host 0.0.0.0 --port 8000  # Bind to all interfaces
 ```
 
 ### Vue 3 Frontend (`web/` directory)
@@ -87,7 +98,7 @@ npm run preview
 cd web && npm run build:cloud
 
 # 2. Initialize database (first time only)
-python scripts/migrate_templates.py                    # Migrate hardcoded templates to SQLite
+python3 scripts/init_db.py                             # Import templates from templates.json to SQLite
 
 # 3. Configure Nginx (copy template from docs/v3.3-architecture-lite.md)
 sudo ln -s /path/to/nginx.conf /etc/nginx/sites-enabled/anti-fomo
