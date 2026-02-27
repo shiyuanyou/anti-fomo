@@ -26,15 +26,17 @@
         {{ store.isSaving ? '保存中...' : (store.mode === 'cloud' ? '保存到浏览器' : '生成配置文件') }}
       </button>
       
-      <div v-if="store.saveStatus !== 'idle'" class="save-status" :class="store.saveStatus">
-        {{ store.saveStatus === 'success' ? '✓ 保存成功' : '✗ 保存失败' }}
+      <div v-if="store.saveStatus !== 'idle'" class="save-status" :class="saveStatusClass">
+        {{ store.saveStatus === 'success' ? 'config.asset.yaml 已生成' : '保存失败，请检查后端连接' }}
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
 import { useConfigStore } from '@/store/configStore';
+import { formatAmount } from '@/utils';
 
 const props = defineProps<{
   currentDimensionLabel: string
@@ -42,10 +44,12 @@ const props = defineProps<{
 
 const store = useConfigStore();
 
-function formatAmount(n: number) {
-  if (n >= 10000) return (n / 10000).toFixed(1) + "万";
-  return n.toLocaleString();
-}
+// Map store's semantic status to the CSS class names defined in style.css
+const saveStatusClass = computed(() => {
+  if (store.saveStatus === 'success') return 'save-ok';
+  if (store.saveStatus === 'error') return 'save-err';
+  return '';
+});
 
 const handleSave = () => {
   store.saveConfig();

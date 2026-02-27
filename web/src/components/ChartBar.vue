@@ -9,9 +9,6 @@ import { ref, onMounted, onBeforeUnmount, watch } from 'vue';
 import Chart from 'chart.js/auto';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 
-// Register the datalabels plugin
-Chart.register(ChartDataLabels);
-
 const props = defineProps<{
   data: any,
   options?: any
@@ -60,6 +57,7 @@ const renderChart = () => {
 
   chartInstance = new Chart(canvasRef.value, {
     type: 'bar',
+    plugins: [ChartDataLabels],  // local registration — does not affect other chart instances
     data: props.data,
     options: props.options || defaultOptions
   });

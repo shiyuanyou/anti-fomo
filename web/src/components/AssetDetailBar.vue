@@ -17,30 +17,13 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useConfigStore } from '@/store/configStore';
+import { formatAmount, PALETTE } from '@/utils';
 
 const props = defineProps<{
   dimension: 'type' | 'region' | 'style'
 }>();
 
 const store = useConfigStore();
-
-const PALETTE = [
-  { from: "#0EA5E9", to: "#0284C7" },   // sky
-  { from: "#8B5CF6", to: "#7C3AED" },   // violet
-  { from: "#F43F5E", to: "#E11D48" },   // rose
-  { from: "#10B981", to: "#059669" },   // emerald
-  { from: "#F59E0B", to: "#D97706" },   // amber
-  { from: "#6366F1", to: "#4F46E5" },   // indigo
-  { from: "#EC4899", to: "#DB2777" },   // pink
-  { from: "#14B8A6", to: "#0D9488" },   // teal
-  { from: "#EF4444", to: "#DC2626" },   // red
-  { from: "#84CC16", to: "#65A30D" },   // lime
-];
-
-function formatAmount(n: number) {
-  if (n >= 10000) return (n / 10000).toFixed(1) + "万";
-  return n.toLocaleString();
-}
 
 const detailItems = computed(() => {
   if (store.assets.length === 0 || store.totalAmount === 0) return [];

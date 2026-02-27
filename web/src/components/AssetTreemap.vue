@@ -1,9 +1,9 @@
 <template>
-  <div class="treemap-container">
+  <div class="treemap-container" ref="containerRef" :class="fadingClass">
     <div v-if="!store.assets.length" class="empty-state">
       暂无资产，请在左侧添加
     </div>
-    <div v-else class="treemap-area" ref="containerRef" @mousemove="onMouseMove" @mouseleave="onMouseLeave">
+    <div v-else class="treemap-area" @mousemove="onMouseMove" @mouseleave="onMouseLeave">
       <div 
         v-for="cell in layoutCells" 
         :key="cell.id"
@@ -54,6 +54,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { useConfigStore } from '@/store/configStore';
+import { formatAmount, PALETTE } from '@/utils';
 import type { Asset } from '@/types';
 
 const props = defineProps<{
@@ -69,6 +70,10 @@ const containerRef = ref<HTMLElement | null>(null);
 const tooltipRef = ref<HTMLElement | null>(null);
 const containerSize = ref({ width: 0, height: 0 });
 
+// Dimension switch fading animation
+const fadingClass = ref<string>('');
+let isTransitioning = false;
+
 // Tooltip state
 const showTooltip = ref(false);
 const hoveredBlock = ref<any>(null);
@@ -78,10 +83,12 @@ const tooltipY = ref(0);
 const resizeObserver = ref<ResizeObserver | null>(null);
 
 const updateSize = () => {
-  if (containerRef.value) {
+  // Measure the inner treemap-area for layout; fall back to container
+  const el = containerRef.value;
+  if (el) {
     containerSize.value = {
-      width: containerRef.value.clientWidth,
-      height: containerRef.value.clientHeight
+      width: el.clientWidth,
+      height: el.clientHeight
     };
   }
 };
@@ -112,6 +119,21 @@ onUnmounted(() => {
     resizeObserver.value.disconnect();
   }
   window.removeEventListener('resize', updateSize);
+});
+
+// Fading transition when dimension prop changes
+watch(() => props.dimension, async (newVal, oldVal) => {
+  if (newVal === oldVal || isTransitioning) return;
+  isTransitioning = true;
+
+  fadingClass.value = 'fading-out';
+  await new Promise(r => setTimeout(r, 200));
+
+  fadingClass.value = 'fading-in';
+  await new Promise(r => setTimeout(r, 350));
+
+  fadingClass.value = '';
+  isTransitioning = false;
 });
 
 watch(() => store.assets.length, async (newLen, oldLen) => {
@@ -160,25 +182,7 @@ const onMouseLeave = () => {
   hoveredBlock.value = null;
 };
 
-const PALETTE = [
-  { from: "#0EA5E9", to: "#0284C7" },   // sky
-  { from: "#8B5CF6", to: "#7C3AED" },   // violet
-  { from: "#F43F5E", to: "#E11D48" },   // rose
-  { from: "#10B981", to: "#059669" },   // emerald
-  { from: "#F59E0B", to: "#D97706" },   // amber
-  { from: "#6366F1", to: "#4F46E5" },   // indigo
-  { from: "#EC4899", to: "#DB2777" },   // pink
-  { from: "#14B8A6", to: "#0D9488" },   // teal
-  { from: "#EF4444", to: "#DC2626" },   // red
-  { from: "#84CC16", to: "#65A30D" },   // lime
-];
-
 const GAP = 3; // px gap between blocks
-
-function formatAmount(n: number) {
-  if (n >= 10000) return (n / 10000).toFixed(1) + "万";
-  return n.toLocaleString();
-}
 
 function classifySize(w: number, h: number) {
   if (w < 60 || h < 35) return "size-tiny";
@@ -328,7 +332,7 @@ const layoutCells = computed(() => {
   position: relative;
 }
 
-/* Base block styles from original */
+/* Base block styles — animation handled by global blockIn in style.css */
 .treemap-block {
   position: absolute;
   box-sizing: border-box;
@@ -340,18 +344,15 @@ const layoutCells = computed(() => {
   overflow: hidden;
   color: #ffffff;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), 
-              box-shadow 0.2s ease, filter 0.2s ease;
   cursor: pointer;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  animation: popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
 .treemap-block:hover {
-  transform: translateY(-2px) scale(1.01);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.15);
+  filter: brightness(1.25);
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 24px rgba(0, 0, 0, 0.3), inset 0 0 30px rgba(255, 255, 255, 0.03);
   z-index: 10;
-  filter: brightness(1.1);
 }
 
 /* Typography styles based on size classes */
@@ -404,12 +405,7 @@ const layoutCells = computed(() => {
 }
 .size-tiny .block-pct, .size-tiny .block-amount { display: none; }
 
-@keyframes popIn {
-  from { opacity: 0; transform: scale(0.95) translateY(10px); }
-  to { opacity: 1; transform: scale(1) translateY(0); }
-}
-
-/* Tooltip styles from style.css */
+/* Tooltip styles */
 .treemap-tooltip {
     position: fixed;
     background: rgba(15, 23, 42, 0.95);

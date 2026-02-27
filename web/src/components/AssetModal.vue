@@ -30,7 +30,11 @@
             </div>
             <div class="modal-asset-actions">
               <button class="btn-edit" @click="startEdit(asset)">编辑</button>
-              <button class="btn-delete" @click="handleDelete(asset.id)">删除</button>
+              <button 
+                class="btn-delete" 
+                :class="{ confirming: deletingId === asset.id }"
+                @click="handleDelete(asset.id)"
+              >{{ deletingId === asset.id ? '确认?' : '删除' }}</button>
             </div>
           </div>
           
@@ -82,6 +86,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import { useConfigStore } from '@/store/configStore';
+import { formatAmount } from '@/utils';
 import type { Asset } from '@/types';
 
 const props = defineProps<{
@@ -108,20 +113,39 @@ const groupAssets = computed(() => {
 const close = () => {
   emit('update:show', false);
   cancelEdit();
+  resetDeleteState();
 };
 
-const formatAmount = (n: number) => {
-  if (n >= 10000) return (n / 10000).toFixed(1) + "万";
-  return n.toLocaleString();
+// --- Two-step delete confirmation ---
+const deletingId = ref<string | null>(null);
+let deletingTimer: ReturnType<typeof setTimeout> | null = null;
+
+const resetDeleteState = () => {
+  deletingId.value = null;
+  if (deletingTimer !== null) {
+    clearTimeout(deletingTimer);
+    deletingTimer = null;
+  }
 };
 
 const handleDelete = (id: string | undefined) => {
   if (!id) return;
-  if (confirm('确定要删除此资产吗？')) {
+
+  if (deletingId.value === id) {
+    // Second click: execute delete
+    resetDeleteState();
     store.removeAsset(id);
     if (groupAssets.value.length === 0) {
       close();
     }
+  } else {
+    // First click: enter confirming state, auto-cancel after 3s
+    resetDeleteState();
+    deletingId.value = id;
+    deletingTimer = setTimeout(() => {
+      deletingId.value = null;
+      deletingTimer = null;
+    }, 3000);
   }
 };
 
@@ -158,10 +182,11 @@ const saveEdit = (id: string | undefined) => {
   cancelEdit();
 };
 
-// Reset edit state when modal closes
+// Reset edit and delete state when modal closes
 watch(() => props.show, (newVal) => {
   if (!newVal) {
     cancelEdit();
+    resetDeleteState();
   }
 });
 </script>

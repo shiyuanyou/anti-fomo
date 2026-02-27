@@ -1,5 +1,5 @@
 <template>
-  <main class="main view-panel active">
+  <main class="main view-panel active" style="overflow-y: auto; flex-direction: column;">
     <div class="templates-layout">
       <div class="templates-header-row">
         <h2 class="section-title">配置模板库</h2>
@@ -8,61 +8,157 @@
           数据来源：真实历史模拟回测，仅供认知参考，不构成投资建议
         </div>
       </div>
-      
+
       <div class="templates-grid">
         <div v-if="loading" class="templates-loading">加载模板中...</div>
-        
-        <div v-for="t in templates" :key="t.id" class="template-card" @click="openTemplate(t)">
-          <div class="template-header">
-            <h3>{{ t.name }}</h3>
-            <div class="tags">
-              <span v-for="tag in t.personality_tags" :key="tag" class="tag">{{ tag }}</span>
+
+        <div
+          v-for="t in templates"
+          :key="t.id"
+          class="template-card"
+          @click="openTemplate(t)"
+        >
+          <!-- Header: name + risk badge + tagline + audience -->
+          <div class="tcard-header">
+            <div class="tcard-title-row">
+              <span class="tcard-name">{{ t.name }}</span>
+              <span
+                v-if="t.risk_level"
+                class="risk-badge"
+                :style="riskStyle(t.risk_level)"
+              >{{ t.risk_level }}风险</span>
+            </div>
+            <p class="tcard-tagline">{{ t.tagline }}</p>
+            <p class="tcard-audience">{{ t.target_audience }}</p>
+          </div>
+
+          <!-- Allocation bar + chips -->
+          <div class="tcard-alloc">
+            <div class="alloc-bar">
+              <div
+                v-for="(seg, i) in allocSegments(t)"
+                :key="seg.category"
+                class="alloc-bar-seg"
+                :style="{ width: seg.pct + '%', background: ALLOC_PALETTE[i % ALLOC_PALETTE.length] }"
+                :title="`${seg.category} ${seg.pct}%`"
+              ></div>
+            </div>
+            <div class="alloc-chips">
+              <span
+                v-for="(seg, i) in allocSegments(t)"
+                :key="seg.category"
+                class="alloc-chip"
+              >
+                <span class="alloc-dot" :style="{ background: ALLOC_PALETTE[i % ALLOC_PALETTE.length] }"></span>
+                {{ seg.category }}
+                <span class="alloc-chip-pct">{{ seg.pct }}%</span>
+              </span>
             </div>
           </div>
-          
-          <p class="template-desc">{{ t.description }}</p>
-          
-          <div class="metrics">
-            <div class="metric">
-              <span class="metric-val">{{ t.metrics.expected_return.toFixed(1) }}%</span>
-              <span class="metric-lbl">预期年化</span>
+
+          <!-- 4-metric grid -->
+          <div class="tcard-metrics">
+            <div class="metric-item">
+              <span class="metric-label">年化收益</span>
+              <span class="metric-value metric-pos">+{{ t.metrics.expected_return.toFixed(1) }}%</span>
             </div>
-            <div class="metric">
-              <span class="metric-val">{{ t.metrics.volatility.toFixed(1) }}%</span>
-              <span class="metric-lbl">波动率</span>
+            <div class="metric-item">
+              <span class="metric-label">年化波动</span>
+              <span class="metric-value">{{ t.metrics.volatility.toFixed(1) }}%</span>
             </div>
-            <div class="metric">
-              <span class="metric-val">{{ t.metrics.max_drawdown.toFixed(1) }}%</span>
-              <span class="metric-lbl">最大回撤</span>
+            <div class="metric-item">
+              <span class="metric-label">最大回撤</span>
+              <span class="metric-value metric-neg">{{ t.metrics.max_drawdown.toFixed(1) }}%</span>
+            </div>
+            <div class="metric-item">
+              <span class="metric-label">夏普比率</span>
+              <span class="metric-value">{{ t.metrics.sharpe_ratio.toFixed(2) }}</span>
             </div>
           </div>
-          
-          <div class="template-footer">
-            <span class="view-details">查看详情 &rarr;</span>
+
+          <!-- Personality tags + description -->
+          <div class="tcard-personality">
+            <div class="ptags">
+              <span v-for="tag in t.personality_tags" :key="tag" class="ptag">{{ tag }}</span>
+            </div>
+            <p class="personality-desc">{{ personalityDesc(t) }}</p>
+          </div>
+
+          <!-- Footer: data period + compare button -->
+          <div class="tcard-footer">
+            <span
+              class="data-period"
+              :class="t.metrics.data_period.includes('真实') ? 'data-period-real' : 'data-period-est'"
+            >{{ t.metrics.data_period }}</span>
+            <button
+              class="btn btn-compare-from-card"
+              @click.stop="goToCompare(t.id)"
+            >与我的配置对比</button>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Template Modal (Simple Implementation) -->
-    <div v-if="selectedTemplate" class="modal-overlay" @click="closeTemplate">
-      <div class="modal-content" @click.stop>
+    <!-- Template Detail Modal -->
+    <div
+      v-if="selectedTemplate"
+      class="modal-overlay visible"
+      @click.self="closeTemplate"
+    >
+      <div class="modal" style="width: 560px; max-width: calc(100vw - 40px);">
         <div class="modal-header">
-          <h2>{{ selectedTemplate.name }}</h2>
+          <div class="modal-title">{{ selectedTemplate.name }}</div>
           <button class="modal-close" @click="closeTemplate">&times;</button>
         </div>
-        <div class="modal-body">
-          <p>{{ selectedTemplate.description }}</p>
-          
-          <div class="template-detail-grid">
-            <div class="template-chart-box">
-              <h3>资产配置比例</h3>
-              <ChartPie :data="getPieData(selectedTemplate.allocation)" />
-            </div>
+        <div class="modal-body" style="padding: 20px; gap: 16px; display: flex; flex-direction: column;">
+          <!-- Description -->
+          <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.7;">
+            {{ personalityDesc(selectedTemplate) }}
+          </p>
+
+          <!-- Allocation chart -->
+          <div>
+            <div class="chart-panel-title" style="margin-bottom: 10px;">资产配置比例</div>
+            <ChartPie :data="getPieData(selectedTemplate)" />
           </div>
-          
-          <div class="template-actions">
-            <button class="btn btn-primary" @click="copyTemplate(selectedTemplate)">
+
+          <!-- Metrics table -->
+          <div>
+            <div class="chart-panel-title" style="margin-bottom: 8px;">关键指标</div>
+            <table class="metrics-delta-table">
+              <thead>
+                <tr>
+                  <th>指标</th>
+                  <th>数值</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="mdelta-label">年化收益</td>
+                  <td class="mdelta-num mdelta-good">+{{ selectedTemplate.metrics.expected_return.toFixed(1) }}%</td>
+                </tr>
+                <tr>
+                  <td class="mdelta-label">年化波动</td>
+                  <td class="mdelta-num">{{ selectedTemplate.metrics.volatility.toFixed(1) }}%</td>
+                </tr>
+                <tr>
+                  <td class="mdelta-label">最大回撤</td>
+                  <td class="mdelta-num mdelta-bad">{{ selectedTemplate.metrics.max_drawdown.toFixed(1) }}%</td>
+                </tr>
+                <tr>
+                  <td class="mdelta-label">夏普比率</td>
+                  <td class="mdelta-num">{{ selectedTemplate.metrics.sharpe_ratio.toFixed(2) }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Actions -->
+          <div style="display: flex; gap: 10px; justify-content: flex-end; padding-top: 4px;">
+            <button class="btn btn-compare-from-card" @click="closeTemplate(); goToCompare(selectedTemplate!.id)">
+              与我的配置对比
+            </button>
+            <button class="btn btn-primary" @click="copyTemplate(selectedTemplate!)">
               复制此配置到我的组合
             </button>
           </div>
@@ -76,6 +172,7 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useConfigStore } from '@/store/configStore';
+import { ALLOC_PALETTE, RISK_COLORS } from '@/utils';
 import type { Template } from '@/types';
 import ChartPie from '@/components/ChartPie.vue';
 
@@ -85,11 +182,6 @@ const store = useConfigStore();
 const templates = ref<Template[]>([]);
 const loading = ref(true);
 const selectedTemplate = ref<Template | null>(null);
-
-const COLORS = [
-  '#3b82f6', '#10b981', '#f59e0b', '#ef4444', 
-  '#8b5cf6', '#ec4899', '#06b6d4', '#14b8a6'
-];
 
 onMounted(async () => {
   try {
@@ -104,6 +196,35 @@ onMounted(async () => {
   }
 });
 
+// --- Helpers ---
+
+const riskStyle = (level: string) => {
+  const c = RISK_COLORS[level] || RISK_COLORS["中"];
+  return { background: c.bg, borderColor: c.border, color: c.text };
+};
+
+/** Build allocation segments from allocations list (weight 0-1 decimal) */
+const allocSegments = (t: Template) => {
+  if (t.allocations && t.allocations.length > 0) {
+    return t.allocations.map(a => ({
+      category: a.category,
+      pct: Math.round(a.weight * 100)
+    }));
+  }
+  // Fall back to simple allocation dict (values already in %)
+  if (t.allocation) {
+    return Object.entries(t.allocation).map(([category, pct]) => ({
+      category,
+      pct: Math.round(pct)
+    }));
+  }
+  return [];
+};
+
+const personalityDesc = (t: Template): string => {
+  return t.original_data?.personality_description ?? t.description ?? '';
+};
+
 const openTemplate = (t: Template) => {
   selectedTemplate.value = t;
 };
@@ -112,13 +233,17 @@ const closeTemplate = () => {
   selectedTemplate.value = null;
 };
 
-const getPieData = (allocation: Record<string, number>) => {
-  const labels = Object.keys(allocation);
+const goToCompare = (templateId: string) => {
+  router.push({ path: '/compare', query: { templateId } });
+};
+
+const getPieData = (t: Template) => {
+  const segs = allocSegments(t);
   return {
-    labels,
+    labels: segs.map(s => s.category),
     datasets: [{
-      data: Object.values(allocation),
-      backgroundColor: labels.map((_, i) => COLORS[i % COLORS.length]),
+      data: segs.map(s => s.pct),
+      backgroundColor: segs.map((_, i) => ALLOC_PALETTE[i % ALLOC_PALETTE.length]),
       borderWidth: 0
     }]
   };
@@ -126,118 +251,24 @@ const getPieData = (allocation: Record<string, number>) => {
 
 const copyTemplate = (t: Template) => {
   if (confirm(`这将会覆盖你当前的配置。\n确定要复制【${t.name}】吗？`)) {
-    // Generate simple assets from allocation
-    const newAssets = Object.entries(t.allocation).map(([type, ratio], index) => {
-      // Create a deterministic amount based on a 100k total
-      const amount = (ratio / 100) * 100000;
-      return {
-        name: `${type}资产`,
-        code: '',
-        amount,
-        type,
-        region: '全球',
-        style: '无'
-      };
-    });
-    
+    const segs = allocSegments(t);
+    const newAssets = segs.map(seg => ({
+      name: `${seg.category}资产`,
+      code: '',
+      amount: (seg.pct / 100) * 100000,
+      type: seg.category,
+      region: '全球',
+      style: '无'
+    }));
+
     store.setAssets(newAssets);
-    
-    // Auto save if in cloud mode
+
     if (store.mode === 'cloud') {
       store.saveConfig();
     }
-    
+
     closeTemplate();
     router.push('/');
   }
 };
 </script>
-
-<style scoped>
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-}
-
-.modal-content {
-  background-color: var(--panel-bg);
-  border-radius: 12px;
-  width: 90%;
-  max-width: 600px;
-  max-height: 90vh;
-  overflow-y: auto;
-  border: 1px solid var(--border-color);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
-}
-
-.modal-header {
-  padding: 20px 24px;
-  border-bottom: 1px solid var(--border-color);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.modal-header h2 {
-  margin: 0;
-  font-size: 1.25rem;
-  color: #fff;
-}
-
-.modal-close {
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  font-size: 1.5rem;
-  cursor: pointer;
-}
-
-.modal-close:hover {
-  color: #fff;
-}
-
-.modal-body {
-  padding: 24px;
-}
-
-.modal-body p {
-  color: var(--text-color);
-  margin-bottom: 24px;
-  line-height: 1.6;
-}
-
-.template-detail-grid {
-  background-color: var(--bg-color);
-  border-radius: 8px;
-  padding: 20px;
-  margin-bottom: 24px;
-}
-
-.template-chart-box h3 {
-  margin-top: 0;
-  margin-bottom: 16px;
-  font-size: 1rem;
-  color: #e5e7eb;
-  text-align: center;
-}
-
-.template-actions {
-  display: flex;
-  justify-content: center;
-}
-
-.btn-primary {
-  width: 100%;
-  max-width: 300px;
-  padding: 12px;
-  font-size: 1rem;
-}
-</style>
