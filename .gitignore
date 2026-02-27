@@ -45,6 +45,9 @@ cache/
 # v3 generated data files (run scripts/fetch_index_data.py and calc_template_metrics.py to regenerate)
 base_datas/
 
+# v3.3+ SQLite database
+anti-fomo.db
+
 # Jupyter
 .ipynb_checkpoints/
 *.ipynb
