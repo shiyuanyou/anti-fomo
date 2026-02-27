@@ -11,7 +11,11 @@
       </div>
       <div class="summary-item">
         <span class="summary-label">总金额</span>
-        <span class="summary-value">{{ store.totalAmount.toLocaleString() }}</span>
+        <span class="summary-value">{{ formatAmount(store.totalAmount) }}</span>
+      </div>
+      <div class="summary-item">
+        <span class="summary-label">当前维度</span>
+        <span class="summary-value">{{ currentDimensionLabel }}</span>
       </div>
       
       <button 
@@ -32,7 +36,16 @@
 <script setup lang="ts">
 import { useConfigStore } from '@/store/configStore';
 
+const props = defineProps<{
+  currentDimensionLabel: string
+}>();
+
 const store = useConfigStore();
+
+function formatAmount(n: number) {
+  if (n >= 10000) return (n / 10000).toFixed(1) + "万";
+  return n.toLocaleString();
+}
 
 const handleSave = () => {
   store.saveConfig();

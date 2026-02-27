@@ -3,7 +3,7 @@
     <!-- Sidebar: Input Area -->
     <aside class="sidebar">
       <AssetEditor />
-      <AssetSummary />
+      <AssetSummary :currentDimensionLabel="currentDimensionLabel" />
     </aside>
 
     <!-- Display Area -->
@@ -19,6 +19,7 @@
             @click="currentDimension = dim.value"
           >
             {{ dim.label }}
+            <span class="tab-badge">{{ getGroupCount(dim.value) }}</span>
           </button>
         </div>
       </div>
@@ -29,17 +30,26 @@
           @edit="handleEdit" 
         />
       </div>
+      
+      <AssetDetailBar :dimension="currentDimension" />
     </section>
+    
+    <AssetModal 
+      v-model:show="showModal" 
+      :groupName="modalGroupName" 
+      :dimensionKey="currentDimension" 
+    />
   </main>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useConfigStore } from '@/store/configStore';
 import AssetEditor from '@/components/AssetEditor.vue';
 import AssetSummary from '@/components/AssetSummary.vue';
 import AssetTreemap from '@/components/AssetTreemap.vue';
-import type { Asset } from '@/types';
+import AssetDetailBar from '@/components/AssetDetailBar.vue';
+import AssetModal from '@/components/AssetModal.vue';
 
 const store = useConfigStore();
 
@@ -52,14 +62,31 @@ const dimensions: {label: string, value: DimensionType}[] = [
   { label: '风格', value: 'style' }
 ];
 
-const handleEdit = (asset: Asset) => {
-  // Simple delete for now as a placeholder for full edit modal
-  if (confirm(`确定要删除资产 ${asset.name} 吗？\n(编辑功能将在后续补全)`)) {
-    store.removeAsset(asset.id!);
-  }
+const currentDimensionLabel = computed(() => {
+  return dimensions.find(d => d.value === currentDimension.value)?.label || '类型';
+});
+
+const getGroupCount = (dim: DimensionType) => {
+  const groups = new Set<string>();
+  store.assets.forEach(asset => {
+    groups.add(asset[dim] || '其他');
+  });
+  return groups.size;
+};
+
+const showModal = ref(false);
+const modalGroupName = ref('');
+
+const handleEdit = (groupName: string) => {
+  modalGroupName.value = groupName;
+  showModal.value = true;
 };
 
 onMounted(() => {
   store.loadConfig();
 });
 </script>
+
+<style scoped>
+/* Component styles inherited from globals */
+</style>
