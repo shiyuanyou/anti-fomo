@@ -1399,6 +1399,15 @@ body {
     color: var(--text-muted);
 }
 
+/* v3 data source badges */
+.data-period-real {
+    color: #34D399;
+}
+
+.data-period-est {
+    color: var(--text-muted);
+}
+
 .btn-compare-from-card {
     padding: 5px 14px;
     font-size: 11px;
@@ -1632,6 +1641,14 @@ body {
     color: var(--text-muted);
     margin-top: 8px;
     font-family: var(--font-mono);
+}
+
+.metrics-data-source.data-period-real {
+    color: #34D399;
+}
+
+.metrics-data-source.data-period-est {
+    color: var(--text-muted);
 }
 
 /* Metrics delta table */

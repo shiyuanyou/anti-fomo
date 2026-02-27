@@ -1,0 +1,504 @@
+{
+  "exported_at": "2026-02-26",
+  "data_period": "2010-01-01 至 2026-02-27",
+  "templates": [
+    {
+      "id": "global_balanced",
+      "name": "全球均衡型",
+      "description": "你相信全球经济长期向上，不执着于押注某个国家或地区。股债均衡让你在市场大跌时不会过于恐慌，也不会在牛市中错过主要涨幅。适合长期持有、不频繁操作的投资者。",
+      "metrics": {
+        "expected_return": 14.91,
+        "volatility": 12.93,
+        "max_drawdown": -23.79,
+        "sharpe_ratio": 0.998,
+        "data_period": "2010-2026 真实历史回测"
+      },
+      "allocation": {
+        "A股大盘": 20.0,
+        "发达市场股票 (全球)": 20.0,
+        "新兴市场股票 (全球)": 10.0,
+        "美股大盘 (美国)": 10.0,
+        "债券": 25.0,
+        "债券 (全球)": 10.0,
+        "黄金 (全球)": 5.0
+      },
+      "personality_tags": [
+        "无国界思维",
+        "追求平稳",
+        "相信长期成长",
+        "债券作为压舱石"
+      ],
+      "original_data": {
+        "id": "global_balanced",
+        "name": "全球均衡型",
+        "tagline": "股债平衡，本外均配，长期稳健增长",
+        "target_audience": "追求稳健长期增长、认可全球分散价值的投资者",
+        "risk_level": "中",
+        "allocations": [
+          {
+            "category": "A股大盘",
+            "region": "中国",
+            "weight": 0.2
+          },
+          {
+            "category": "发达市场股票",
+            "region": "全球",
+            "weight": 0.2
+          },
+          {
+            "category": "新兴市场股票",
+            "region": "全球",
+            "weight": 0.1
+          },
+          {
+            "category": "美股大盘",
+            "region": "美国",
+            "weight": 0.1
+          },
+          {
+            "category": "债券",
+            "region": "中国",
+            "weight": 0.25
+          },
+          {
+            "category": "债券",
+            "region": "全球",
+            "weight": 0.1
+          },
+          {
+            "category": "黄金",
+            "region": "全球",
+            "weight": 0.05
+          }
+        ],
+        "metrics": {
+          "expected_return": 14.91,
+          "volatility": 12.93,
+          "max_drawdown": -23.79,
+          "sharpe_ratio": 0.998,
+          "data_period": "2010-2026 真实历史回测"
+        },
+        "personality_tags": [
+          "无国界思维",
+          "追求平稳",
+          "相信长期成长",
+          "债券作为压舱石"
+        ],
+        "personality_description": "你相信全球经济长期向上，不执着于押注某个国家或地区。股债均衡让你在市场大跌时不会过于恐慌，也不会在牛市中错过主要涨幅。适合长期持有、不频繁操作的投资者。"
+      }
+    },
+    {
+      "id": "a_share_core",
+      "name": "A股核心型",
+      "description": "你对中国市场有深度理解和信心，愿意接受较大的波动以换取更高的长期潜在回报。对全球化分散持保留态度，认为了解自己的市场比广泛分散更重要。需要较强的心理承受能力，适合有一定A股投资经验的人。",
+      "metrics": {
+        "expected_return": 2.2,
+        "volatility": 13.29,
+        "max_drawdown": -38.16,
+        "sharpe_ratio": 0.015,
+        "data_period": "2010-2026 真实历史回测"
+      },
+      "allocation": {
+        "A股大盘": 35.0,
+        "A股中盘": 20.0,
+        "A股小盘": 15.0,
+        "港股 (中国香港)": 10.0,
+        "债券": 15.0,
+        "货币基金": 5.0
+      },
+      "personality_tags": [
+        "本国优先",
+        "接受大幅波动",
+        "相信中国经济",
+        "集中持仓"
+      ],
+      "original_data": {
+        "id": "a_share_core",
+        "name": "A股核心型",
+        "tagline": "本国优先，深度参与中国经济成长",
+        "target_audience": "对中国市场有信心、日常关注A股、接受较高波动的投资者",
+        "risk_level": "中高",
+        "allocations": [
+          {
+            "category": "A股大盘",
+            "region": "中国",
+            "weight": 0.35
+          },
+          {
+            "category": "A股中盘",
+            "region": "中国",
+            "weight": 0.2
+          },
+          {
+            "category": "A股小盘",
+            "region": "中国",
+            "weight": 0.15
+          },
+          {
+            "category": "港股",
+            "region": "中国香港",
+            "weight": 0.1
+          },
+          {
+            "category": "债券",
+            "region": "中国",
+            "weight": 0.15
+          },
+          {
+            "category": "货币基金",
+            "region": "中国",
+            "weight": 0.05
+          }
+        ],
+        "metrics": {
+          "expected_return": 2.2,
+          "volatility": 13.29,
+          "max_drawdown": -38.16,
+          "sharpe_ratio": 0.015,
+          "data_period": "2010-2026 真实历史回测"
+        },
+        "personality_tags": [
+          "本国优先",
+          "接受大幅波动",
+          "相信中国经济",
+          "集中持仓"
+        ],
+        "personality_description": "你对中国市场有深度理解和信心，愿意接受较大的波动以换取更高的长期潜在回报。对全球化分散持保留态度，认为了解自己的市场比广泛分散更重要。需要较强的心理承受能力，适合有一定A股投资经验的人。"
+      }
+    },
+    {
+      "id": "all_weather",
+      "name": "全天候防御型",
+      "description": "你把\"不亏钱\"放在第一位，愿意牺牲部分上行空间来换取夜晚的安心。认可黄金和大宗商品在通胀和危机中的对冲价值。相信分散化本身就是最好的主动管理策略之一。夏普比率在六个模板中最高，回撤最小。",
+      "metrics": {
+        "expected_return": 13.86,
+        "volatility": 9.81,
+        "max_drawdown": -15.25,
+        "sharpe_ratio": 1.209,
+        "data_period": "2010-2026 真实历史回测"
+      },
+      "allocation": {
+        "A股大盘": 12.0,
+        "发达市场股票 (全球)": 13.0,
+        "债券": 30.0,
+        "债券 (全球)": 15.0,
+        "黄金 (全球)": 15.0,
+        "大宗商品 (全球)": 10.0,
+        "货币基金": 5.0
+      },
+      "personality_tags": [
+        "追求平稳",
+        "认可黄金/商品对冲",
+        "风险平价思维",
+        "长期防御"
+      ],
+      "original_data": {
+        "id": "all_weather",
+        "name": "全天候防御型",
+        "tagline": "风险平价，多资产对冲，任何市场环境下保持韧性",
+        "target_audience": "风险厌恶、厌倦市场剧烈波动、希望平稳穿越周期的投资者",
+        "risk_level": "低",
+        "allocations": [
+          {
+            "category": "A股大盘",
+            "region": "中国",
+            "weight": 0.12
+          },
+          {
+            "category": "发达市场股票",
+            "region": "全球",
+            "weight": 0.13
+          },
+          {
+            "category": "债券",
+            "region": "中国",
+            "weight": 0.3
+          },
+          {
+            "category": "债券",
+            "region": "全球",
+            "weight": 0.15
+          },
+          {
+            "category": "黄金",
+            "region": "全球",
+            "weight": 0.15
+          },
+          {
+            "category": "大宗商品",
+            "region": "全球",
+            "weight": 0.1
+          },
+          {
+            "category": "货币基金",
+            "region": "中国",
+            "weight": 0.05
+          }
+        ],
+        "metrics": {
+          "expected_return": 13.86,
+          "volatility": 9.81,
+          "max_drawdown": -15.25,
+          "sharpe_ratio": 1.209,
+          "data_period": "2010-2026 真实历史回测"
+        },
+        "personality_tags": [
+          "追求平稳",
+          "认可黄金/商品对冲",
+          "风险平价思维",
+          "长期防御"
+        ],
+        "personality_description": "你把\"不亏钱\"放在第一位，愿意牺牲部分上行空间来换取夜晚的安心。认可黄金和大宗商品在通胀和危机中的对冲价值。相信分散化本身就是最好的主动管理策略之一。夏普比率在六个模板中最高，回撤最小。"
+      }
+    },
+    {
+      "id": "growth_aggressive",
+      "name": "成长进取型",
+      "description": "你相信科技是这个时代最确定的长期驱动力，愿意承受短期的剧烈波动。投资期限通常在10年以上，把市场下跌视为加仓机会而非退出信号。这个配置在牛市中表现出色，但在熊市中回撤超过50%的概率较高，需要强大的心理承受力。",
+      "metrics": {
+        "expected_return": 8.9,
+        "volatility": 18.68,
+        "max_drawdown": -37.76,
+        "sharpe_ratio": 0.369,
+        "data_period": "2010-2026 真实历史回测"
+      },
+      "allocation": {
+        "美股科技 (美国)": 30.0,
+        "A股成长": 20.0,
+        "新兴市场股票 (全球)": 20.0,
+        "港股科技 (中国香港)": 15.0,
+        "债券": 10.0,
+        "货币基金": 5.0
+      },
+      "personality_tags": [
+        "接受大幅波动",
+        "相信长期成长",
+        "科技驱动思维",
+        "高风险高回报"
+      ],
+      "original_data": {
+        "id": "growth_aggressive",
+        "name": "成长进取型",
+        "tagline": "高风险高预期，押注科技与新兴市场的长期爆发力",
+        "target_audience": "年轻、投资期限长、接受高波动高回撤、相信科技变革的投资者",
+        "risk_level": "高",
+        "allocations": [
+          {
+            "category": "美股科技",
+            "region": "美国",
+            "weight": 0.3
+          },
+          {
+            "category": "A股成长",
+            "region": "中国",
+            "weight": 0.2
+          },
+          {
+            "category": "新兴市场股票",
+            "region": "全球",
+            "weight": 0.2
+          },
+          {
+            "category": "港股科技",
+            "region": "中国香港",
+            "weight": 0.15
+          },
+          {
+            "category": "债券",
+            "region": "中国",
+            "weight": 0.1
+          },
+          {
+            "category": "货币基金",
+            "region": "中国",
+            "weight": 0.05
+          }
+        ],
+        "metrics": {
+          "expected_return": 8.9,
+          "volatility": 18.68,
+          "max_drawdown": -37.76,
+          "sharpe_ratio": 0.369,
+          "data_period": "2010-2026 真实历史回测"
+        },
+        "personality_tags": [
+          "接受大幅波动",
+          "相信长期成长",
+          "科技驱动思维",
+          "高风险高回报"
+        ],
+        "personality_description": "你相信科技是这个时代最确定的长期驱动力，愿意承受短期的剧烈波动。投资期限通常在10年以上，把市场下跌视为加仓机会而非退出信号。这个配置在牛市中表现出色，但在熊市中回撤超过50%的概率较高，需要强大的心理承受力。"
+      }
+    },
+    {
+      "id": "global_diversified",
+      "name": "无国界对冲型",
+      "description": "你认为把大部分资产集中在单一国家是一种系统性风险，哪怕是本国市场。对地缘政治、货币贬值和区域性危机有清醒认识，主动用地理多元化来对冲。A股占比刻意压低，不是因为不看好中国，而是因为相信真正的分散必须超越国界。",
+      "metrics": {
+        "expected_return": 13.09,
+        "volatility": 11.08,
+        "max_drawdown": -20.62,
+        "sharpe_ratio": 1.001,
+        "data_period": "2010-2026 真实历史回测"
+      },
+      "allocation": {
+        "美股大盘 (美国)": 20.0,
+        "欧洲股票 (欧洲)": 12.0,
+        "日本股票 (日本)": 8.0,
+        "A股大盘": 10.0,
+        "新兴市场股票 (全球)": 10.0,
+        "债券 (全球)": 20.0,
+        "黄金 (全球)": 10.0,
+        "大宗商品 (全球)": 5.0,
+        "货币基金": 5.0
+      },
+      "personality_tags": [
+        "无国界思维",
+        "真正分散",
+        "弱化本国偏好",
+        "多区域多资产"
+      ],
+      "original_data": {
+        "id": "global_diversified",
+        "name": "无国界对冲型",
+        "tagline": "全球充分分散，弱化本国偏好，追求真正的全球化配置",
+        "target_audience": "认同全球化逻辑、不想把命运与单一国家绑定的投资者",
+        "risk_level": "中",
+        "allocations": [
+          {
+            "category": "美股大盘",
+            "region": "美国",
+            "weight": 0.2
+          },
+          {
+            "category": "欧洲股票",
+            "region": "欧洲",
+            "weight": 0.12
+          },
+          {
+            "category": "日本股票",
+            "region": "日本",
+            "weight": 0.08
+          },
+          {
+            "category": "A股大盘",
+            "region": "中国",
+            "weight": 0.1
+          },
+          {
+            "category": "新兴市场股票",
+            "region": "全球",
+            "weight": 0.1
+          },
+          {
+            "category": "债券",
+            "region": "全球",
+            "weight": 0.2
+          },
+          {
+            "category": "黄金",
+            "region": "全球",
+            "weight": 0.1
+          },
+          {
+            "category": "大宗商品",
+            "region": "全球",
+            "weight": 0.05
+          },
+          {
+            "category": "货币基金",
+            "region": "中国",
+            "weight": 0.05
+          }
+        ],
+        "metrics": {
+          "expected_return": 13.09,
+          "volatility": 11.08,
+          "max_drawdown": -20.62,
+          "sharpe_ratio": 1.001,
+          "data_period": "2010-2026 真实历史回测"
+        },
+        "personality_tags": [
+          "无国界思维",
+          "真正分散",
+          "弱化本国偏好",
+          "多区域多资产"
+        ],
+        "personality_description": "你认为把大部分资产集中在单一国家是一种系统性风险，哪怕是本国市场。对地缘政治、货币贬值和区域性危机有清醒认识，主动用地理多元化来对冲。A股占比刻意压低，不是因为不看好中国，而是因为相信真正的分散必须超越国界。"
+      }
+    },
+    {
+      "id": "cash_conservative",
+      "name": "现金稳健型",
+      "description": "你目前处于保守或观望阶段，把资金安全和流动性放在首位。可能是处于人生的某个特殊阶段（如近期有大额支出），或者认为当前市场估值偏高在等待机会。这个配置的夏普比率最高（波动率极低），但绝对回报有限，长期持有会面临购买力被通胀侵蚀的风险。",
+      "metrics": {
+        "expected_return": 4.15,
+        "volatility": 1.63,
+        "max_drawdown": -1.63,
+        "sharpe_ratio": 1.319,
+        "data_period": "2010-2026 真实历史回测"
+      },
+      "allocation": {
+        "货币基金": 40.0,
+        "短期债券": 30.0,
+        "债券": 15.0,
+        "黄金 (全球)": 10.0,
+        "A股大盘": 5.0
+      },
+      "personality_tags": [
+        "追求平稳",
+        "流动性优先",
+        "防御型",
+        "等待入场时机"
+      ],
+      "original_data": {
+        "id": "cash_conservative",
+        "name": "现金稳健型",
+        "tagline": "流动性优先，保守防御，等待更好的机会",
+        "target_audience": "短期资金、极度保守型、或处于观望阶段的投资者",
+        "risk_level": "低",
+        "allocations": [
+          {
+            "category": "货币基金",
+            "region": "中国",
+            "weight": 0.4
+          },
+          {
+            "category": "短期债券",
+            "region": "中国",
+            "weight": 0.3
+          },
+          {
+            "category": "债券",
+            "region": "中国",
+            "weight": 0.15
+          },
+          {
+            "category": "黄金",
+            "region": "全球",
+            "weight": 0.1
+          },
+          {
+            "category": "A股大盘",
+            "region": "中国",
+            "weight": 0.05
+          }
+        ],
+        "metrics": {
+          "expected_return": 4.15,
+          "volatility": 1.63,
+          "max_drawdown": -1.63,
+          "sharpe_ratio": 1.319,
+          "data_period": "2010-2026 真实历史回测"
+        },
+        "personality_tags": [
+          "追求平稳",
+          "流动性优先",
+          "防御型",
+          "等待入场时机"
+        ],
+        "personality_description": "你目前处于保守或观望阶段，把资金安全和流动性放在首位。可能是处于人生的某个特殊阶段（如近期有大额支出），或者认为当前市场估值偏高在等待机会。这个配置的夏普比率最高（波动率极低），但绝对回报有限，长期持有会面临购买力被通胀侵蚀的风险。"
+      }
+    }
+  ]
+}

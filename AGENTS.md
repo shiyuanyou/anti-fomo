@@ -1,272 +1,183 @@
 # AGENTS.md
 
-This repository is a Python app for asset allocation awareness and anti-FOMO
-portfolio monitoring. The guidance below is for agentic coding tools working
-in this repo.
+This repository is a Python + Vue 3 app for asset allocation awareness and anti-FOMO portfolio monitoring. The guidance below is for agentic coding tools working in this repo.
 
-## Product Context
+## 1. Product & Architecture Context
 
-Anti-FOMO is a **cognitive awareness tool**, not a trading assistant or robo-advisor.
-The core insight: most users lack a global view of their own asset allocation.
-"Seeing" their portfolio clearly — and comparing it against proven templates —
-is more valuable than any real-time alert or AI trading suggestion.
+Anti-FOMO is a **cognitive awareness tool**, not an auto-trading bot.
 
-**v2 focus**: `serve.py` + `web/` — a major upgrade to the Web configuration UI,
-adding template library, metrics comparison, personality matching, and AI migration
-advice. The v1 backend monitoring pipeline (`run.py`) is kept functional but is
-not the development priority.
+### Core Entry Points
+1. **`run.py`** — CLI for portfolio monitoring (v1). Stable, do not break.
+2. **`api/`** — FastAPI backend (v3.3+) with layered architecture:
+   - `api/app/main.py` — Application factory (`create_app()`)
+   - `api/main.py` — Uvicorn entry point
+   - `api/routers/` — Route handlers: `assets.py`, `templates.py`, `shares.py`
+   - `api/models/` — SQLAlchemy ORM models (`Template`, `Share`)
+   - `api/schemas/` — Pydantic request/response schemas
+   - `api/crud/` — Database CRUD operations (only place that touches SQLite)
+   - `api/services/` — Business logic layer (compare, AI, shares)
+3. **`web/`** — Vue 3 + Vite + TypeScript frontend (v3.3+)
+4. **`web-legacy/`** — Original vanilla JS demo. Read-only reference; do not modify.
+5. **`scripts/`** — Offline data pipelines and one-shot DB initialization utilities.
 
-## Architecture
+### Legacy / Backup Files (do not use or modify)
+- `serve_legacy.py.bak`, `src/template_engine/templates_legacy.py.bak` — backed-up old code
 
-The project has two entry points:
+### Frontend Dual-Mode Architecture
+`web/` builds in two modes controlled by `VITE_APP_MODE`:
+- **Local Mode** (`npm run build:local`, `.env.local`): Pinia store uses `LocalStorageStrategy` — reads `GET /api/assets`, writes `POST /api/save` to backend YAML.
+- **Cloud Mode** (`npm run build:cloud`, `.env.cloud`): Pinia store uses `CloudStorageStrategy` — reads/writes `localStorage`. Templates and shares via `/api/templates` and `/api/shares`.
 
-1. **`run.py`** -- CLI for portfolio monitoring (single check, weekly report, or daily scheduler). v1, stable.
-2. **`serve.py`** -- HTTP server for the Web-based asset configuration UI. v2 active development.
+### Database (v3.3+)
+- **SQLite** (`anti-fomo.db` in project root) — do not commit this file.
+- Tables: `templates` (official allocations), `shares` (user-exported configs).
+- ORM only: never write raw SQL in route handlers. All DB access via `api/crud/`.
+- Migration path to PostgreSQL: change `DATABASE_URL` in `api/models/database.py` — zero code changes needed.
 
-`serve.py` generates `config.asset.yaml`, which is the **sole source** of
-portfolio holdings (stock names, codes, ratios). `config.yaml` only holds
-operational settings (thresholds, AI analysis, data fetch, market engine,
-cache, notification, scheduler, decision engine, report).
+---
 
-Core module dependency (simplified):
+## 2. Build, Lint, and Test Commands
 
-```
-run.py -> src/main.py (AntiFOMO)
-              |- src/portfolio_engine/   (Portfolio, Holding, DataFetcher,
-              |                           VolatilityCalculator, ThresholdManager)
-              |- src/market_engine/      (MarketScorer, MarketStatus -> akshare)
-              |- src/decision_engine/    (PaceController, RebalanceChecker)
-              |- src/report_engine/      (DailyDigest, WeeklyReport)
-              |- src/ai_engine/          (AIAnalyzer -> OpenAI SDK)
-              +- src/notification/       (NotificationManager)
-
-serve.py -> web/ (static SPA) -> config.asset.yaml (generated)
-         -> src/template_engine/ (v2 new: TemplateLibrary, TemplateComparator)
-         -> src/ai_engine/template_advisor.py (v2 new: personality match + migration advice)
-```
-
-Notes:
-- `run.py` inserts `src/` into `sys.path` at runtime, so imports within
-  `src/` use bare package names (e.g., `from portfolio_engine import Portfolio`).
-  Sub-packages use relative imports internally (e.g., `from .cache import DataCache`).
-- `serve.py` uses Python's stdlib `http.server.SimpleHTTPRequestHandler` +
-  `socketserver.TCPServer`. No third-party web framework (Flask, FastAPI, etc.) is
-  present or should be introduced.
-- Each sub-package `__init__.py` re-exports its public symbols with an explicit
-  `__all__` list. Follow this pattern when adding new packages.
-
-## Quick Start Commands
+### Python Backend
 
 ```bash
-pip3 install -r requirements.txt       # install deps (use pip3 on macOS system Python)
-python3 serve.py                       # web UI at http://localhost:8080
-python3 run.py                         # single daily check (v1)
-python3 run.py weekly                  # generate weekly report immediately (v1)
-python3 run.py schedule                # daily scheduler + weekly report on Fridays (v1)
+# Install dependencies
+pip install -r requirements.txt
+
+# Format and lint
+ruff format .
+ruff check --fix .
+
+# Type checking
+mypy src/ --ignore-missing-imports
+mypy api/ --ignore-missing-imports
+
+# Run all tests
+pytest
+
+# Run a single test file
+pytest tests/test_portfolio.py
+
+# Run a single test by name
+pytest tests/test_portfolio.py::test_portfolio_creation
+
+# Run with coverage
+pytest --cov=src --cov=api --cov-report=html
+
+# Database migrations
+alembic revision --autogenerate -m "description"
+alembic upgrade head
+
+# Initialize DB from templates.json (first-time setup only)
+python3 scripts/init_db.py
+
+# Run FastAPI dev server (from repo root)
+python3 -m uvicorn api.main:app --reload --port 8000
 ```
 
-## Build / Lint / Test
-
-There is no formal build system, linter, or unit test suite yet.
-
-- Build: N/A
-- Lint: N/A
-- Test: N/A
-
-If you add tests, place them in a `tests/` folder and provide a way to run
-a single test:
+### Vue 3 Frontend (`web/`)
 
 ```bash
-pytest tests/test_x.py::test_name
+cd web
+npm install
+
+npm run dev            # Dev server with proxy to localhost:8000
+npm run build:local    # Production build — Local Mode
+npm run build:cloud    # Production build — Cloud Mode
+npm run preview        # Preview the last build
 ```
 
-Keep tests deterministic -- mock network calls (`akshare`) and LLM APIs.
+There is **no separate test command** for the frontend; use the Vite build (`build:local`) as the compile/type-check gate. A clean build with zero errors is the acceptance criterion.
 
-## Configuration Files
+---
 
-| File | Purpose |
-|------|---------|
-| `config.yaml` | Operational config (thresholds, AI, data fetch, market engine, decision engine, report, cache, notification, scheduler). No portfolio holdings. No secrets. |
-| `config.asset.yaml` | Generated by `serve.py`. Sole source of holdings for `run.py`. Gitignored. |
-| `config.example.yaml` | Example config for new users. |
-| `docs/v1-dev-wiki.md` | v1 implementation status, data structures, tech debt. |
-| `docs/v2-dev-wiki.md` | v2 development plan, new module contracts, build order. Read this before starting v2 features. |
+## 3. Code Style Guidelines
 
-Environment variables (preferred for secrets):
-- `OPENAI_API_KEY` or `AI_API_KEY`
-- `OPENAI_BASE_URL` (for compatible providers)
+### Python — General
+- **Python 3.8+** throughout.
+- No emojis in code, comments, logs, or commit messages.
+- Favor small, readable functions. Avoid deep abstraction or unnecessary wrapper classes.
+- Do not add comments that merely restate what the code does.
 
-### Symbol field disambiguation
+### Python — Imports
+- Order: standard library → third-party → local. One blank line between groups.
+- Explicit imports only; no `from module import *`.
+- Absolute imports for cross-package: `from api.schemas import TemplateResponse`
+- Relative imports within the same package: `from .cache import DataCache`
 
-- `config.asset.yaml portfolio.holdings[].symbol` -- akshare **market data** code (e.g. `000510`)
-- `config.yaml market_engine.indices[].symbol` -- akshare **valuation** API Chinese name (e.g. `沪深300`)
+### Python — Formatting
+- 4-space indentation. Max line length 100–120 characters.
+- Double quotes `"` for string literals and dict defaults.
+- f-strings for all string interpolation; no `%` or `.format()`.
+- Do not auto-format YAML keys.
 
-These are different fields used by different APIs. Do not conflate them.
+### Python — Types
+- Type hints on all public functions and dataclass fields.
+- Use `Optional[T]` for nullable values (not `T | None` — keep 3.8 compat).
+- `@dataclass` for data containers; add `__str__` when human-readable output helps.
+- Pydantic `BaseModel` for all API request/response schemas (in `api/schemas/`).
+- SQLAlchemy models use singular nouns: `class Template(Base)`, `class Share(Base)`.
 
-## Engine Responsibilities
-
-### v1 Engines (stable, do not modify during v2 work)
-
-| Engine | Input | Output |
-|--------|-------|--------|
-| `portfolio_engine` | `config.asset.yaml` holdings | `PortfolioVolatilityResult`, `AlertResult` |
-| `market_engine` | `config.yaml market_engine` | `MarketStatus` (composite score, per-index PE/PB percentiles) |
-| `decision_engine` | `PortfolioVolatilityResult` + `MarketStatus` | `Decision` (should_check, action_suggestion, rebalance details) |
-| `report_engine` | all of the above | formatted string (daily digest or Markdown weekly report) |
-| `ai_engine/analyzer.py` | `PortfolioVolatilityResult` + `AlertResult` | `Optional[str]` analysis text |
-| `notification` | report string + alert | console / file / email dispatch |
-
-`src/main.py:AntiFOMO` is the sole orchestrator for the v1 pipeline. New v1 features
-should be added as engine methods and wired up in `run_check()` or `run_weekly_report()`.
-
-### v2 Engines (new, active development)
-
-| Engine | Input | Output |
-|--------|-------|--------|
-| `template_engine/templates.py` | static data | `List[PortfolioTemplate]` |
-| `template_engine/comparator.py` | user holdings + `PortfolioTemplate` | `ComparisonResult` (diffs, metrics delta) |
-| `ai_engine/template_advisor.py` | user holdings + template | `str` (personality match or migration advice) |
-
-New `serve.py` API endpoints (v2):
-- `GET /api/templates` — template list with metrics and personality tags
-- `GET /api/templates/{id}` — single template detail
-- `POST /api/compare` — user config vs. template comparison
-- `POST /api/ai/profile-match` — AI personality matching (optional)
-- `POST /api/ai/migrate` — AI migration advice
-
-## Code Style Guidelines
-
-### General
-
-- Language: Python 3.x.
-- **No emoji anywhere** -- logs, code, comments, commit messages, docs.
-  Keep all output concise, professional, and clear.
-- Favor small, readable functions over deep abstraction.
-- Avoid unnecessary comments; explain only non-obvious behavior.
-
-### Imports
-
-- Standard library first, then third-party, then local imports.
-- Keep imports at top of file. Lazy imports inside functions are acceptable
-  for heavy or optional deps (e.g., `import schedule`, `import akshare`).
-- Use explicit imports; no wildcards.
-- `TYPE_CHECKING` guards are acceptable for cross-engine type hints to avoid
-  circular imports (see `pace_controller.py` for the pattern).
-
-### Formatting
-
-- Indentation: 4 spaces.
-- Use double quotes for string literals and `dict.get()` defaults.
-  Dict key subscript access (`data['key']`) may use single quotes; this is an
-  existing minor inconsistency — prefer double quotes for new code.
-- Keep line length reasonable (100-120 chars).
-- Prefer f-strings for formatting.
-- Do not auto-format or reorder YAML keys unless necessary.
-
-### Types
-
-- Use type hints for public functions and dataclass fields.
-- Prefer `Optional[T]` for nullable values.
-- Dataclasses (`@dataclass`) are the standard for data containers.
-  Implement `__str__` on dataclasses when human-readable output is useful.
-- LSP errors for `pandas`, `openai`, `schedule` are environment false-positives
-  (sys.path injection). Do not add type: ignore comments just to silence them.
-
-### Naming Conventions
-
-- Classes: `CamelCase` (e.g., `AntiFOMO`, `DataFetcher`, `PaceController`).
-- Functions / variables: `snake_case`.
-- Private helpers: prefix with `_` (e.g., `_load_config`, `_make_decision`).
-- Constants: `UPPER_SNAKE_CASE` (e.g., `PORT`, `BASE_DIR`).
+### Python — Naming
+- Classes: `CamelCase` — `AntiFOMO`, `DataFetcher`
+- Functions/variables: `snake_case`
+- Private helpers: `_leading_underscore`
+- Constants: `UPPER_SNAKE_CASE`
 - Enums: `CamelCase` class, `UPPER_SNAKE_CASE` members
-  (e.g., `AlertLevel.WARNING`, `MarketState.CHEAP`).
-- File names: `snake_case.py`.
 
-### Error Handling
+### Python — Error Handling
+- Wrap all external calls (akshare, OpenAI, network) in `try/except`; return safe defaults (`None`, empty list/DataFrame) and log a warning. Never crash on external failure.
+- `raise SystemExit(1)` only for fatal startup errors (missing required config file).
+- `ValueError` only for programmer errors (invalid arguments passed to a function).
+- FastAPI route errors: `raise HTTPException(status_code=404, detail="Template not found")`
 
-- Prefer graceful failure with clear console messages.
-- For external calls (network / API), wrap in try/except and return safe
-  defaults (empty DataFrame, `None`) where appropriate.
-- `_evaluate_index` in `market_scorer.py` wraps the entire body in try/except
-  to handle both akshare failures and column-name changes gracefully -- follow
-  this pattern for any new external-data processing function.
-- Use `raise SystemExit(1)` only for truly fatal config errors (missing
-  `config.asset.yaml`, empty holdings).
-- Use `ValueError` only for programmer errors (invalid arguments).
-- Avoid raising exceptions for user-supplied config unless the system
-  cannot proceed; print an error and return a safe default instead.
+### Python — State & Side Effects
+- `config.asset.yaml` is the sole source of truth for holdings in Local Mode. Only read/write via `api/routers/assets.py`.
+- Cache files live in `cache/` (pickle/JSON, 24 h TTL). Always go through `ValuationFetcher`.
+- File IO: only write inside `logs/`, `cache/`, or `base_datas/`.
+- Database: all writes through SQLAlchemy ORM in `api/crud/`. No raw SQL anywhere.
 
-### IO and Side Effects
+---
 
-- Configuration parsing lives in `src/main.py:_load_config`.
-- Portfolio data fetching is centralized in `src/portfolio_engine/data_fetcher.py`.
-- Market valuation fetching is centralized in `src/market_engine/valuation_fetcher.py`.
-- Notification output is centralized in `src/notification/manager.py`.
-- Weekly reports are written to `logs/weekly_YYYYMMDD.md` by `main.py:_save_weekly_report`.
-- Avoid writing files outside `logs/` and `cache/`.
+## 4. Frontend Guidelines (Vue 3 + TypeScript)
 
-### Caching
+### Component Authoring
+- Use `<script setup lang="ts">` (Composition API). No Options API.
+- Scoped CSS inside `.vue` files for component-specific styles. Global styles in `web/src/assets/style.css`.
+- Do **not** duplicate CSS classes from `style.css` in scoped blocks — check the global file first.
+- All CSS variables are defined in `style.css :root`. Use those names (`--bg-primary`, `--accent`, `--text-secondary`, etc.). Never invent new variable names like `--panel-bg` or `--bg-color`.
 
-- Market PE/PB data is cached in `cache/` as pickle + JSON meta files.
-- Cache key format: `pe_{symbol}` / `pb_{symbol}` (Chinese names; known tech
-  debt on Windows/NAS paths -- do not change the format without also fixing the
-  path-safety issue).
-- TTL default: 24 hours (configurable via `config.yaml cache.ttl_hours`).
-- Do not bypass the cache in production paths; always go through `ValuationFetcher`.
+### State Management (Pinia — `configStore`)
+- The single store (`web/src/store/configStore.ts`) uses a **strategy pattern** for dual-mode storage.
+- `loadConfig()` has a `_loaded` guard — it executes only once per session. Calling it again is a no-op.
+- `setAssets()` sets `_loaded = true` to prevent subsequent `loadConfig()` calls (e.g., on route navigation) from overwriting freshly set in-memory state. This is intentional — preserve it.
+- `saveStatus` values are `'idle' | 'success' | 'error'`. CSS expects `save-ok` / `save-err` class names; map with a computed property, do not change the store's internal values.
 
-### AI Analysis
+### Shared Utilities
+- `web/src/utils/index.ts` exports: `formatAmount()`, `PALETTE`, `ALLOC_PALETTE`, `RISK_COLORS`.
+- **Never copy-paste these into components.** Import from `@/utils`.
+- `PALETTE` and `ALLOC_PALETTE` must stay identical across treemap blocks and detail chips — both sort by value descending, so color indices match automatically.
 
-- `src/ai_engine/analyzer.py` is the only module that calls LLM APIs for v1 monitoring.
-- v2 adds `src/ai_engine/template_advisor.py` for template personality matching and
-  migration advice. Keep these two files separate; do not mix concerns.
-- Current v1 interface: `analyze(portfolio_result, alert_result) -> Optional[str]`.
-- Do not hardcode API keys; use environment variables or config.
+### Types (`web/src/types/index.ts`)
+- `Template` has **both** `allocations: AllocationItem[]` (detailed, with `region` per item) and `allocation: Record<string, number> | null` (simplified dict, values in %). Prefer `allocations` when `region` data is needed (e.g., `copyTemplate`).
+- Do not use `any` for API responses that have known shapes — extend the type interfaces instead.
 
-### Asset Configuration
+### Chart.js Usage
+- `ChartBar.vue` uses `chartjs-plugin-datalabels` via **local registration** (`plugins: [ChartDataLabels]` inside `new Chart()`). Do not call `Chart.register(ChartDataLabels)` globally — it pollutes all chart instances.
+- Always `destroy()` a chart instance before re-creating it.
 
-- `serve.py` serves `web/` and provides the config generation API.
-- `config.asset.yaml` is the sole source of holdings for `run.py`.
-- Keep the web asset schema simple: name, code, amount, type, region, style.
-- `src/asset_configurator.py` is the legacy interactive CLI wizard
-  (superseded by `serve.py`). Keep it functional but do not expand it.
+### Networking
+- Use the standard `fetch` API. Do not introduce Axios.
+- All API paths are relative (`/api/...`). The Vite dev proxy forwards them to `localhost:8000`.
 
-### Template Engine (v2)
+---
 
-- Template data (allocations, metrics, personality tags) is initially static JSON
-  baked into `src/template_engine/templates.py`. Do not fetch live data for templates.
-- Quantitative metrics (annualized return, Sharpe ratio, max drawdown) are
-  historical simulation approximations. Always surface the data period (e.g.,
-  "2010-2024 historical simulation") to avoid misleading users.
-- `TemplateComparator` reads user holdings from `config.asset.yaml`; it must not
-  call akshare or any live data source.
+## 5. Repository Conventions
 
-### Frontend (v2)
-
-- `web/` remains a zero-build-tool vanilla HTML/CSS/JS SPA. No React, Vue, or
-  bundlers.
-- The current `web/app.js` contains a hand-implemented squarified treemap renderer
-  and a modal-based asset edit/delete flow. Do not replace these with library
-  components unless explicitly instructed.
-- Charts: use **Chart.js** via CDN (pie, radar, bar). No other charting libraries.
-- New JS files are split by feature: `templates.js`, `compare.js`, `charts.js`.
-- All API calls use `fetch`; do not introduce axios or other HTTP clients.
-
-## Repository Conventions
-
-- No Cursor or Copilot rule files are present.
-- Keep `config.yaml` free of secrets and free of portfolio holdings.
-- Documentation: `README.md` (user-facing), `AGENTS.md` (agent guidance).
-  Do not create additional top-level markdown docs.
-- `docs/` holds short-term dev memory between sessions. Not for user-facing docs.
-- `web/` is a vanilla HTML/CSS/JS SPA with no build tools or frameworks.
-- Several files in `src/` have iCloud conflict duplicates named `"<name> 2.py"`
-  (e.g., `portfolio 2.py`, `data_fetcher 2.py`). These are never imported and
-  should be ignored; do not edit or create files with space-and-number suffixes.
-
-## Suggested Manual Verification
-
-```bash
-python3 serve.py          # open browser, verify template library and compare views
-python3 run.py            # confirm v1 daily check still completes with DailyDigest output
-python3 run.py weekly     # confirm weekly report generates and saves to logs/
-```
+- **No Cursor or Copilot rule files** — do not look for `.cursor/` or `.github/copilot-instructions.md`.
+- `anti-fomo.db` is in `.gitignore`. Do not commit it.
+- `web-legacy/` is read-only reference code (original vanilla JS demo). It is the design authority for UI interactions and visual style. When in doubt about intended UX, check the corresponding file there.
+- Files in `src/` named `"<name> 2.py"` are iCloud sync duplicates. Ignore them; never import or edit them.
+- Migration/init scripts go in `scripts/`. They are one-shot utilities, not part of the regular server.
+- FastAPI auto-generates docs at `http://localhost:8000/docs` (Swagger) and `/redoc` (ReDoc).
+- Commit messages: lowercase imperative, no emoji, no period. Example: `fix template copy missing region field`

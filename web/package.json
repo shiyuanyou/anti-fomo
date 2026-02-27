@@ -1,0 +1,27 @@
+{
+  "name": "anti-fomo-web",
+  "private": true,
+  "version": "3.5.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build:local": "vite build --mode development",
+    "build:cloud": "vite build --mode production",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "chart.js": "^4.4.3",
+    "chartjs-plugin-datalabels": "^2.2.0",
+    "pinia": "^2.1.7",
+    "vue": "^3.4.29",
+    "vue-router": "^4.3.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.9",
+    "@vitejs/plugin-vue": "^5.0.5",
+    "@vue/tsconfig": "^0.8.1",
+    "typescript": "^5.2.2",
+    "vite": "^5.3.1",
+    "vue-tsc": "^2.0.21"
+  }
+}
