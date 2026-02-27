@@ -8,34 +8,59 @@ Anti-FOMO is a **cognitive awareness tool**, not an auto-trading bot.
 
 ### Core Entry Points
 1. **`run.py`** -- CLI for portfolio monitoring (v1). Stable.
-2. **`serve.py`** -- HTTP server for the web UI (v2/v3). In v3.5+, it serves the `web/dist` directory.
-3. **`scripts/`** -- v3 offline data pipelines (pulling index history via akshare).
+2. **`serve.py`** -- Legacy HTTP server for web UI (v2/v3). To be replaced by FastAPI in v3.3.
+3. **`api/`** -- **NEW in v3.3**: FastAPI backend serving `/api/*` routes for both local and cloud modes.
+4. **`scripts/`** -- Offline data pipelines (pulling index history via akshare).
 
-### Frontend Context (v3.5+)
+### Frontend Context (v3+)
 The `web/` directory uses **Vue 3 + Vite + TypeScript**. It operates in two modes:
-- **Local Mode** (`.env.local`): Reads/writes to the backend `config.asset.yaml`. Used when running `serve.py` locally.
-- **Cloud Mode** (`.env.cloud`): Reads/writes purely to browser `localStorage` (used for Nginx deployments and sharing).
+- **Local Mode** (`.env.local`): Reads/writes to backend `config.asset.yaml` via `/api/assets`
+- **Cloud Mode** (`.env.cloud`): Reads/writes browser `localStorage`, uses `/api/templates` and `/api/shares` for sharing
+
+**v3.3 Architecture Change**: Frontend is now pure static files served by Nginx. Backend is separate FastAPI service on port 8000. Frontend calls `https://anti-fomo.yoyoostone.cn/api/*` in production.
+
+### Database Context (v3.3+)
+- **SQLite** for official templates (`templates` table) and user shares (`shares` table)
+- **SQLAlchemy ORM** for database operations, **Alembic** for migrations
+- Single file: `anti-fomo.db` in project root
+- **Migration path**: Can switch to PostgreSQL by changing DB URL in `api/database.py` with zero code changes
 
 ---
 
 ## 2. Build, Lint, and Test Commands
 
-### Python Backend
+### Python Backend (src/ and api/)
 We use `ruff` for linting/formatting, `mypy` for typing, and `pytest` for testing.
 
 ```bash
+# Install dependencies (v3.3+)
+pip install -r requirements.txt
+pip install fastapi uvicorn sqlalchemy alembic
+
 # Format and lint code
 ruff format .
 ruff check --fix .
 
 # Type checking
 mypy src/ --ignore-missing-imports
+mypy api/ --ignore-missing-imports
 
 # Testing (Mock external dependencies like akshare/OpenAI)
 pytest                                                   # Run all tests
 pytest tests/test_portfolio.py                           # Run a specific test file
 pytest tests/test_portfolio.py::test_portfolio_creation  # Run a single test
-pytest --cov=src --cov-report=html                       # Run with coverage
+pytest --cov=src --cov=src --cov-report=html           # Run with coverage
+
+# Database migrations (v3.3+)
+alembic revision --autogenerate -m "description"         # Create migration
+alembic upgrade head                                     # Apply migrations
+
+# Run FastAPI backend (development)
+cd api
+uvicorn main:app --reload --port 8000                  # Auto-reload on code changes
+
+# Run FastAPI backend (production)
+uvicorn main:app --host 0.0.0.0 --port 8000            # Bind to all interfaces
 ```
 
 ### Vue 3 Frontend (`web/` directory)
@@ -43,14 +68,35 @@ pytest --cov=src --cov-report=html                       # Run with coverage
 cd web
 npm install
 
-# Run local development server
+# Run local development server (with API proxy to localhost:8000)
 npm run dev
 
 # Build for Local Mode (reads/writes to backend config.asset.yaml)
 npm run build:local
 
-# Build for Cloud Mode (reads/writes to localStorage, for Nginx/Share deployments)
+# Build for Cloud Mode (reads/writes localStorage, for Nginx/Share deployments)
 npm run build:cloud
+
+# Preview production build
+npm run preview
+```
+
+### Deployment Commands (v3.3+)
+```bash
+# 1. Build frontend for cloud deployment
+cd web && npm run build:cloud
+
+# 2. Initialize database (first time only)
+python scripts/migrate_templates.py                    # Migrate hardcoded templates to SQLite
+
+# 3. Configure Nginx (copy template from docs/v3.3-architecture-lite.md)
+sudo ln -s /path/to/nginx.conf /etc/nginx/sites-enabled/anti-fomo
+sudo certbot --nginx -d anti-fomo.yoyoostone.cn       # SSL certificate
+
+# 4. Setup systemd service for FastAPI
+cp docs/anti-fomo-api.service /etc/systemd/system/
+sudo systemctl enable anti-fomo-api
+sudo systemctl start anti-fomo-api
 ```
 
 ---
@@ -65,7 +111,9 @@ npm run build:cloud
 ### Python Imports
 - Order: Standard library -> Third-party -> Local imports.
 - Use explicit imports; no wildcards (`from module import *`).
-- Internal module imports should use bare package names if injected into `sys.path` (e.g., `from portfolio_engine import Portfolio`), but prefer relative imports within the same sub-package (`from .cache import DataCache`).
+- Use absolute imports for cross-package references: `from portfolio_engine import Portfolio`
+- Use relative imports within same package: `from .cache import DataCache`
+- **v3.3+**: In `api/`, use `from models import Template` (no relative imports needed)
 
 ### Python Formatting
 - **Indentation**: 4 spaces.
@@ -78,6 +126,7 @@ npm run build:cloud
 - Use type hints for all public functions and dataclass fields.
 - Prefer `Optional[T]` for nullable values.
 - Standardize on `@dataclass` for data containers; implement `__str__` if human-readable output is helpful.
+- Use Pydantic models for API request/response schemas (v3.3+, in `api/schemas.py`)
 
 ### Python Naming Conventions
 - **Classes**: `CamelCase` (e.g., `AntiFOMO`, `DataFetcher`).
@@ -85,25 +134,35 @@ npm run build:cloud
 - **Private Helpers**: Prefix with `_` (e.g., `_load_config`).
 - **Constants**: `UPPER_SNAKE_CASE` (e.g., `PORT`, `BASE_DIR`).
 - **Enums**: `CamelCase` class, `UPPER_SNAKE_CASE` members.
+- **Database Models**: Singular noun (e.g., `class Template(Base)`, `class Share(Base)`)
 
 ### Python Error Handling
 - Prefer graceful failure. Wrap external network/API calls (like akshare or OpenAI) in `try/except` and return safe defaults (e.g., empty DataFrame, `None`).
 - Log warnings on failure rather than crashing.
 - Use `raise SystemExit(1)` only for truly fatal config errors (e.g., missing `config.asset.yaml`).
 - Use `ValueError` strictly for programmer errors (invalid arguments).
+- **FastAPI errors**: Use HTTPException for API errors: `raise HTTPException(status_code=404, detail="Template not found")`
 
 ### State & Side Effects
 - **Config**: Only parse in `src/main.py:_load_config`. `config.asset.yaml` is the sole source of truth for holdings in Local Mode.
 - **Cache**: PE/PB data is cached in `cache/` as pickle/JSON. TTL is 24h. Always go through `ValuationFetcher`.
 - **IO**: Do not write files outside of `logs/`, `cache/`, or `base_datas/`.
+- **Database**: Only write to SQLite through SQLAlchemy ORM in `api/crud.py`. Never use raw SQL in route handlers.
 
 ### Frontend Guidelines (Vue 3 + TS)
 - **Composition API**: Use Vue 3 Composition API (`<script setup lang="ts">`).
 - **State Management**: Use Pinia or abstracted composables to handle the Local vs. Cloud dual-mode logic cleanly.
 - **Styling**: Scoped CSS within Vue components. Maintain the existing visual aesthetic (dark/light theme, Chart.js).
 - **Network**: Use standard `fetch` API. Do not introduce Axios unless absolutely necessary.
+- **Environment Variables**: Use `import.meta.env.VITE_API_BASE_URL` for API base URL (differs between local/cloud modes)
+
+---
 
 ## 4. Repository Conventions
+
 - No Cursor or Copilot rule files are present. Do not look for them.
 - Keep `config.yaml` free of secrets and free of portfolio holdings.
+- **v3.3+**: Keep `anti-fomo.db` in `.gitignore` (SQLite database should not be committed)
 - Several files in `src/` have iCloud conflict duplicates named `"<name> 2.py"`. These are never imported and should be ignored; do not edit or create files with space-and-number suffixes.
+- **Migration scripts**: Place in `scripts/` directory, single-run utilities for data migration
+- **API documentation**: FastAPI auto-generates docs at `/docs` (Swagger UI) and `/redoc` (ReDoc)
