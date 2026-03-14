@@ -328,3 +328,42 @@ RUN if [ ! -f config.asset.yaml ]; then echo "portfolio: {}" > config.asset.yaml
 - [x] Web 前端运行正常
 - [x] 数据库初始化成功 (6 个模板导入)
 - [x] 前后端联调测试通过
+
+### 2024-01-17 (服务层重构规划)
+
+#### 完成状态
+- [x] 创建重构方案文档 `docs/refactoring-plan.md`
+- [x] 服务间通讯选择 gRPC + Protobuf
+- [x] API Gateway 选择 Traefik
+- [x] 数据库拆分方案确定 (BFF + Jobs)
+- [x] 完整架构图和目录结构设计
+- [x] 实施计划分阶段规划
+
+#### 阶段一完成: 目录结构重构 (2024-01-18)
+- [x] 创建 `apps/` 目录结构
+- [x] 移动 `api/` → `apps/bff/`
+- [x] 移动 `src/` → `apps/backend/engines/`
+- [x] 创建 `apps/bff/app/` 主应用 (FastAPI)
+- [x] 创建 `apps/backend/app/` 主应用 (FastAPI)
+- [x] 创建 `shared/` 目录
+- [x] 创建 `configs/` 目录并复制配置文件
+- [x] 创建 `docker/` 目录和 Dockerfiles
+- [x] 更新 `docker-compose.yml` (Traefik + BFF + Backend + Web)
+- [x] 创建独立的 requirements.txt
+- [x] 删除旧的 `api/` 和 `src/` 目录
+
+#### 阶段二完成: 数据库拆分 (2024-01-18)
+- [x] 创建 BFF 数据库模型 (apps/bff/models/)
+- [x] 创建 Jobs 数据库模型 (apps/backend/models/)
+  - Job model: 定时任务执行记录
+  - Report model: 生成的报告
+  - Notification model: 通知记录
+- [x] 更新 BFF database.py (data/bff/anti-fomo-bff.db)
+- [x] 创建 Jobs database.py (data/jobs/anti-fomo-jobs.db)
+- [x] 更新 init_db.py 使用新的导入路径
+
+#### 待完成 (按优先级)
+- [ ] 阶段三: Traefik API Gateway 引入
+- [ ] 阶段四: gRPC 服务间通讯
+- [ ] 阶段五: 定时任务迁移
+- [ ] 阶段六: AI 服务对接

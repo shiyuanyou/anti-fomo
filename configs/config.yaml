@@ -1,0 +1,121 @@
+# 波动率阈值配置
+thresholds:
+  # 总体组合波动阈值（百分比）
+  portfolio_volatility:
+    warning: 3.0   # 警告阈值：日波动超过3%
+    alert: 5.0     # 警报阈值：日波动超过5%
+  
+  # 单个持仓波动阈值（百分比）
+  individual_volatility:
+    warning: 5.0   # 警告阈值：单个持仓日波动超过5%
+    alert: 8.0     # 警报阈值：单个持仓日波动超过8%
+  
+  # 连续波动天数阈值
+  consecutive_days:
+    warning: 3     # 连续3天波动
+    alert: 5       # 连续5天波动
+
+# AI 分析配置
+ai_analysis:
+  enabled: true
+  provider: "ali"  # 可选: openai, anthropic
+  model: "qwen-plus"
+  base_url: "https://dashscope.aliyuncs.com/compatible-mode/v1"  # OpenAI 兼容地址，如 https://api.openai.com/v1
+  api_key: ""  # 建议留空，使用环境变量 OPENAI_API_KEY
+  always_analyze: true  # true 时即使未触发警报也会输出 AI 分析
+  
+  # AI 分析提示词模板
+  prompt_template: |
+    你是反 FOMO 的长期投资助手。请根据以下数据给出简洁、克制、可执行的建议。
+    
+    当前警报级别：{alert_level}
+    组合总波动：{total_volatility}%
+    近期趋势：{recent_trend}
+    
+    持仓权重：
+    {allocation_summary}
+    
+    近一月表现：
+    {month_return_summary}
+    
+    波动明细（如需）：
+    {volatility_details}
+    
+    调仓提示：
+    {rebalance_hint}
+    
+    输出要求：
+    - 若警报级别为 none：不要输出具体涨跌数据，提醒用户把注意力放回生活与长期计划。
+    - 若警报级别为 warning：给出情绪安抚与观察建议，避免短线冲动。
+    - 若警报级别为 alert：给出风险控制建议，可建议将涨幅较多的部分适度转移到涨幅较少的标的。
+    - 建议需结合近一月表现与持仓权重，不要给出买卖点。
+
+# 数据获取配置
+data_fetch:
+  period: "daily"  # daily, weekly
+  start_date: "20240101"
+  end_date: null  # null表示当前日期
+
+# 资产配置文件路径（由配置向导生成）
+asset_config_path: "config.asset.yaml"
+
+# 通知配置
+notification:
+  enabled: true
+  methods:
+    - type: "console"  # 控制台输出
+    - type: "email"    # 邮件通知（需配置）
+      smtp_host: ""
+      smtp_port: 587
+      sender: ""
+      receiver: ""
+      password: ""
+    - type: "file"     # 文件记录
+      log_path: "./logs/alerts.log"
+
+# 市场估值配置
+market_engine:
+  enabled: true
+  indices:
+    - symbol: "沪深300"
+      code: "000300"
+      weight: 0.5
+    - symbol: "中证500"
+      code: "000905"
+      weight: 0.3
+    - symbol: "上证50"
+      code: "000016"
+      weight: 0.2
+  percentile_window_years: 10    # 百分位计算窗口 (年)
+  thresholds:
+    cheap: 20                    # < 20 为便宜
+    expensive: 80                # > 80 为过热
+
+# 缓存配置
+cache:
+  enabled: true
+  dir: "cache/"
+  ttl_hours: 24                  # 缓存有效期 (小时)
+
+# 决策引擎配置
+decision_engine:
+  enabled: true
+  check_market_volatility: true  # 市场极端时也触发看盘提示
+  rebalance_threshold: 5.0       # 再平衡偏离阈值 (百分点)
+
+# 报告配置
+report:
+  weekly:
+    enabled: true
+    day: "friday"                # 周几生成周报
+    time: "16:00"                # 生成时间
+    include_ai: true             # 是否包含 AI 分析
+
+# 调度配置
+scheduler:
+  # 每个交易日收盘后运行（15:30）
+  check_time: "15:30"
+  timezone: "Asia/Shanghai"
+  # 是否在非交易日也检查
+  skip_weekends: true
+  skip_holidays: true

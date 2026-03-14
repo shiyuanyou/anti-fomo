@@ -4,8 +4,8 @@ Template CRUD operations
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 from typing import List, Optional
-from api.models import Template
-from api.schemas import TemplateCreate
+from apps.bff.models import Template
+from apps.bff.schemas import TemplateCreate
 
 
 def get_template(db: Session, template_id: str) -> Optional[Template]:

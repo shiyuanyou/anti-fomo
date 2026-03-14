@@ -5,7 +5,7 @@ from fastapi import APIRouter, HTTPException
 from pathlib import Path
 import yaml
 
-from api.schemas import SaveAssetRequest, SaveAssetResponse
+from apps.bff.schemas import SaveAssetRequest, SaveAssetResponse
 
 router = APIRouter(
     prefix="/api",

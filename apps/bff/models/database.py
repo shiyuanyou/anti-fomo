@@ -10,9 +10,14 @@ Base = declarative_base()
 
 
 def get_database_url() -> str:
-    """Get SQLite database URL"""
-    project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    db_path = os.path.join(project_root, "anti-fomo.db")
+    """Get SQLite database URL from environment or default"""
+    if os.getenv("DATABASE_URL"):
+        return os.getenv("DATABASE_URL")
+    
+    project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+    db_dir = os.path.join(project_root, "data", "bff")
+    os.makedirs(db_dir, exist_ok=True)
+    db_path = os.path.join(db_dir, "anti-fomo-bff.db")
     return f"sqlite:///{db_path}"
 
 
