@@ -45,8 +45,8 @@ def save_asset_config(config: SaveAssetRequest):
     Writes to the local config.asset.yaml file.
     """
     # Clean up _localId if present
-    if "portfolio" in config.portfolio and "holdings" in config.portfolio["portfolio"]:
-        for holding in config.portfolio["portfolio"]["holdings"]:
+    if "holdings" in config.portfolio:
+        for holding in config.portfolio["holdings"]:
             if "_localId" in holding:
                 del holding["_localId"]
 

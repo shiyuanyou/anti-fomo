@@ -187,3 +187,32 @@ There is **no separate test command** for the frontend; use the Vite build (`bui
 ## 6. Error Logging
 
 当 build 或 plan 模式遇到被拒绝的要求或执行错误时，需记录以避免重复犯错。记录应简洁精准，避免 token 浪费。
+
+---
+
+## 7. 开发错误记录
+
+### 2024-01 (v3.5 开发)
+
+#### Bug: assets.py 保存配置时数据结构访问错误
+
+**文件:** `api/routers/assets.py:48`
+
+**问题描述:**
+前端发送的数据结构是 `{"portfolio": {"total_amount": 100000, "holdings": [...]}}`，后端接收到 `config.portfolio` 已经是 `{"total_amount": 100000, "holdings": [...]}`，但代码写的是 `config.portfolio["portfolio"]`，导致永远访问不到数据。
+
+**错误代码:**
+```python
+# 错误
+if "portfolio" in config.portfolio and "holdings" in config.portfolio["portfolio"]:
+    for holding in config.portfolio["portfolio"]["holdings"]:
+```
+
+**修复后:**
+```python
+# 正确
+if "holdings" in config.portfolio:
+    for holding in config.portfolio["holdings"]:
+```
+
+**发现方式:** 代码审查 + 前端调试验证
