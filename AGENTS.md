@@ -239,3 +239,23 @@ make up
 - 前端默认构建 local 模式 (VITE_APP_MODE=local)
 - 需要挂载 config.asset.yaml 才能保存配置
 - 数据库文件持久化在 data/ 目录
+
+---
+
+## 8. 开发进度
+
+### 2024-01-15 (v3.5 开发)
+
+#### 已完成
+- [x] 创建 API 契约文档 `docs/api.md`
+- [x] 修复 assets.py 数据访问 bug
+- [x] 添加 Docker 支持 (Dockerfile.api, Dockerfile.web, docker-compose.yml)
+- [x] 添加 Makefile 命令快捷方式
+- [x] 添加 nginx 反向代理配置
+- [x] Git 提交: `add docker support and api documentation`
+
+#### 待完成
+- [ ] Docker 环境测试验证
+- [ ] 前端构建测试
+- [ ] API 联调测试
+- [ ] 服务层拆分方案设计
