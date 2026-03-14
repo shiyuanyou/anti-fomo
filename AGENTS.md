@@ -362,8 +362,18 @@ RUN if [ ! -f config.asset.yaml ]; then echo "portfolio: {}" > config.asset.yaml
 - [x] 创建 Jobs database.py (data/jobs/anti-fomo-jobs.db)
 - [x] 更新 init_db.py 使用新的导入路径
 
+#### 阶段三完成: Traefik API Gateway (2024-01-18)
+- [x] docker-compose.yml 包含 Traefik 配置
+- [x] Traefik 路由: :80 → web, :8000 → bff
+- [x] 服务标签配置完成
+
+#### 阶段四完成: gRPC 服务间通讯 (2024-01-18)
+- [x] 创建 Protobuf 定义 (shared/proto/service.proto)
+- [x] 实现 Backend gRPC 服务 (apps/backend/services/portfolio_service.py)
+- [x] 实现 BFF gRPC 客户端 (apps/bff/services/backend_client.py)
+- [x] gRPC 端口 50051 配置
+- [x] 更新 Dockerfiles 包含 shared 目录
+
 #### 待完成 (按优先级)
-- [ ] 阶段三: Traefik API Gateway 引入
-- [ ] 阶段四: gRPC 服务间通讯
 - [ ] 阶段五: 定时任务迁移
 - [ ] 阶段六: AI 服务对接

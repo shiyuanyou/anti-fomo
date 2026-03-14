@@ -29,6 +29,7 @@ services:
       - "traefik.http.services.bff.loadbalancer.server.port=8001"
     environment:
       - DATABASE_URL=sqlite:///data/bff/anti-fomo-bff.db
+      - BACKEND_GRPC_ADDR=backend:50051
     volumes:
       - ./configs:/app/configs:ro
       - ./data/bff:/app/data
@@ -48,12 +49,15 @@ services:
       context: .
       dockerfile: docker/Dockerfile.backend
     container_name: anti-fomo-backend
+    ports:
+      - "50051:50051"  # gRPC port
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.backend.rule=PathPrefix(`/internal`)"
       - "traefik.http.services.backend.loadbalancer.server.port=8002"
     environment:
       - DATABASE_URL=sqlite:///data/jobs/anti-fomo-jobs.db
+      - BACKEND_GRPC_PORT=50051
     volumes:
       - ./configs:/app/configs:ro
       - ./data/jobs:/app/data
