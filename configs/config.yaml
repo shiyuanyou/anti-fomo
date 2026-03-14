@@ -17,12 +17,36 @@ thresholds:
 
 # AI 分析配置
 ai_analysis:
-  enabled: true
-  provider: "ali"  # 可选: openai, anthropic
-  model: "qwen-plus"
-  base_url: "https://dashscope.aliyuncs.com/compatible-mode/v1"  # OpenAI 兼容地址，如 https://api.openai.com/v1
-  api_key: ""  # 建议留空，使用环境变量 OPENAI_API_KEY
-  always_analyze: true  # true 时即使未触发警报也会输出 AI 分析
+  enabled: false  # 设为 true 启用 AI 分析
+  # 支持的 provider: openai, minimax, zhipu
+  # 示例配置:
+  # 
+  # 1. 阿里云通义千问 (qwen):
+  #    provider: "openai"
+  #    model: "qwen-plus"
+  #    base_url: "https://dashscope.aliyuncs.com/compatible-mode/v1"
+  #    api_key: "${DASHSCOPE_API_KEY}"
+  #
+  # 2. Minimax:
+  #    provider: "minimax"
+  #    model: "abab6.5s-chat"
+  #    api_key: "${MINIMAX_API_KEY}"
+  #
+  # 3. 智谱 GLM:
+  #    provider: "zhipu"
+  #    model: "glm-4"
+  #    api_key: "${ZHIPU_API_KEY}"
+  #
+  # 4. OpenAI:
+  #    provider: "openai"
+  #    model: "gpt-4"
+  #    api_key: "${OPENAI_API_KEY}"
+  
+  provider: "openai"  # 可选: openai, minimax, zhipu
+  model: "gpt-4"
+  base_url: ""  # 如需代理填写，如 https://api.openai.com/v1
+  api_key: ""  # 建议使用环境变量: AI_API_KEY
+  always_analyze: false  # true 时即使未触发警报也会输出 AI 分析
   
   # AI 分析提示词模板
   prompt_template: |
