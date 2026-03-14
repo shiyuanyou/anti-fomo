@@ -5,15 +5,16 @@ from fastapi import APIRouter, HTTPException
 from pathlib import Path
 import yaml
 
-from api.schemas import SaveAssetRequest, SaveAssetResponse
+from apps.bff.schemas import SaveAssetRequest, SaveAssetResponse
 
 router = APIRouter(
     prefix="/api",
     tags=["assets"],
 )
 
-# Config file path
-CONFIG_FILE = Path(__file__).parent.parent.parent / "config.asset.yaml"
+# Config file path - use environment variable or default to mounted config
+import os
+CONFIG_FILE = Path(os.getenv("CONFIG_FILE", "/app/configs/config.asset.yaml"))
 
 
 @router.get("/assets")

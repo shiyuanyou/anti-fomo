@@ -5,9 +5,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 
-from api.models import get_db
-from api.schemas import TemplateResponse, TemplateListItem
-from api.crud import get_template, get_templates
+from apps.bff.models import get_db
+from apps.bff.schemas import TemplateResponse, TemplateListItem
+from apps.bff.crud import get_template, get_templates
 
 router = APIRouter(
     prefix="/api/templates",

@@ -17,11 +17,14 @@ lib/
 lib64/
 parts/
 sdist/
-var/
 wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+
+# Docker
+.dockerignore
+docker-compose.override.yml
 
 # IDEs
 .idea/

@@ -5,8 +5,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy import select
 from typing import List, Optional
 import uuid
-from api.models import Share
-from api.schemas import ShareCreate
+from apps.bff.models import Share
+from apps.bff.schemas import ShareCreate
 
 
 def generate_share_id() -> str:

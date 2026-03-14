@@ -280,10 +280,7 @@ const copyTemplate = (t: Template) => {
     }
 
     store.setAssets(newAssets);
-
-    if (store.mode === 'cloud') {
-      store.saveConfig();
-    }
+    store.saveConfig();
 
     closeTemplate();
     router.push('/');

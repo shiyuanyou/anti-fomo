@@ -5,9 +5,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 
-from api.models import get_db
-from api.schemas import ShareCreate, ShareResponse
-from api.crud import create_share, get_share
+from apps.bff.models import get_db
+from apps.bff.schemas import ShareCreate, ShareResponse
+from apps.bff.crud import create_share, get_share
 
 router = APIRouter(
     prefix="/api/shares",

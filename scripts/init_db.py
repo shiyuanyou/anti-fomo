@@ -11,9 +11,9 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from api.models import create_tables, SessionLocal
-from api.schemas import TemplateCreate, TemplateMetrics, AllocationItem
-from api.crud import create_template, delete_all_templates
+from apps.bff.models import create_tables, SessionLocal
+from apps.bff.schemas import TemplateCreate, TemplateMetrics, AllocationItem
+from apps.bff.crud import create_template, delete_all_templates
 
 
 def load_templates_from_json() -> list:

@@ -1,11 +1,11 @@
 """
 FastAPI application factory
-Anti-FOMO API v3.3+
+Anti-FOMO BFF v3.5+
 """
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from api.routers import templates_router, shares_router, assets_router
+from apps.bff.routers import templates_router, shares_router, assets_router
 
 
 def create_app() -> FastAPI:

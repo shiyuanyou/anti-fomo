@@ -2,6 +2,17 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import type { Asset, PortfolioConfig } from '@/types';
 
+function generateId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
 // Storage strategy pattern
 interface StorageStrategy {
   load(): Promise<PortfolioConfig | null>;
@@ -98,7 +109,7 @@ export const useConfigStore = defineStore('config', () => {
       // Add local IDs to assets for v-for tracking
       assets.value = config.portfolio.holdings.map(a => ({
         ...a,
-        id: a.id || crypto.randomUUID()
+        id: a.id || generateId()
       }));
     } else {
       assets.value = [];
@@ -134,7 +145,7 @@ export const useConfigStore = defineStore('config', () => {
   function addAsset(asset: Omit<Asset, 'id'>) {
     assets.value.push({
       ...asset,
-      id: crypto.randomUUID()
+      id: generateId()
     });
   }
 
@@ -155,7 +166,7 @@ export const useConfigStore = defineStore('config', () => {
   function setAssets(newAssets: Omit<Asset, 'id'>[]) {
     assets.value = newAssets.map(a => ({
       ...a,
-      id: crypto.randomUUID()
+      id: generateId()
     }));
     _loaded = true;
   }
