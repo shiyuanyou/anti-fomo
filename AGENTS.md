@@ -374,6 +374,17 @@ RUN if [ ! -f config.asset.yaml ]; then echo "portfolio: {}" > config.asset.yaml
 - [x] gRPC 端口 50051 配置
 - [x] 更新 Dockerfiles 包含 shared 目录
 
-#### 待完成 (按优先级)
-- [ ] 阶段五: 定时任务迁移
-- [ ] 阶段六: AI 服务对接
+#### 阶段五完成: 定时任务迁移 (2024-01-18)
+- [x] 创建 JobRunner (apps/backend/jobs/runner.py)
+- [x] 实现 run_daily_check 方法
+- [x] 实现 run_weekly_report 方法
+- [x] 集成 portfolio_engine, market_engine, decision_engine
+
+#### 阶段六完成: AI 服务对接 (2024-01-18)
+- [x] 创建统一 AIService (apps/backend/services/ai_service.py)
+- [x] 支持 OpenAI, Minimax, Zhipu (GLM) 三个 AI 提供商
+- [x] 通过 config.yaml 配置 provider, model, api_key
+- [x] 环境变量: AI_API_KEY
+
+#### 所有阶段完成
+架构重构已全部完成，服务可以独立部署。
