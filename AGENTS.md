@@ -388,3 +388,18 @@ RUN if [ ! -f config.asset.yaml ]; then echo "portfolio: {}" > config.asset.yaml
 
 #### 所有阶段完成
 架构重构已全部完成，服务可以独立部署。
+
+### 2024-01-18 (Docker 验证)
+
+#### 完成状态
+- [x] BFF 服务运行正常 (端口 8001, health check 通过)
+- [x] Backend 服务运行正常 (端口 8002, gRPC 50051)
+- [x] Web 前端运行正常 (端口 3000)
+- [x] 数据库初始化成功 (6 个模板导入)
+- [x] 前后端联调测试通过
+
+#### Docker 端口映射
+- BFF: http://localhost:8001
+- Backend: http://localhost:8002
+- Web: http://localhost:3000
+- gRPC: localhost:50051
