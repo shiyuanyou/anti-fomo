@@ -259,3 +259,72 @@ make up
 - [ ] 前端构建测试
 - [ ] API 联调测试
 - [ ] 服务层拆分方案设计
+
+---
+
+### 2024-01-16 (Docker 部署验证)
+
+#### Bug: requirements.txt 拼写错误
+
+**文件:** `requirements.txt:12`
+
+**问题描述:**
+依赖包名拼写错误，`lembi` 应为 `alembic`（数据库迁移工具）。
+
+**修复:**
+```python
+# 错误
+lembi
+
+# 正确
+alembic
+```
+
+**发现方式:** Docker 构建时 pip 安装失败
+
+#### Bug: Dockerfile.api 缺少 config.asset.yaml 处理
+
+**文件:** `Dockerfile.api`
+
+**问题描述:**
+直接 COPY 不存在的 config.asset.yaml 文件导致 Docker 构建失败。
+
+**修复:**
+```dockerfile
+# 使用 RUN 创建默认空文件
+RUN if [ ! -f config.asset.yaml ]; then echo "portfolio: {}" > config.asset.yaml; fi
+```
+
+#### Bug: docker-compose volume 挂载不存在的文件
+
+**文件:** `docker-compose.yml`
+
+**问题描述:**
+挂载不存在的 config.asset.yaml 文件导致容器启动失败。
+
+**修复:**
+移除该 volume 挂载，改为在 Dockerfile 中创建默认文件。
+
+#### Docker 环境初始化步骤
+
+1. 构建并启动服务：
+   ```bash
+   docker compose up -d
+   ```
+
+2. 初始化数据库（首次）：
+   ```bash
+   docker exec anti-fomo-api python scripts/init_db.py
+   ```
+
+3. 验证服务：
+   - API: http://localhost:8000
+   - Web: http://localhost:3000
+   - API Docs: http://localhost:8000/docs
+
+#### 完成状态
+- [x] Docker 容器构建成功
+- [x] API 服务运行正常 (health check 通过)
+- [x] Web 前端运行正常
+- [x] 数据库初始化成功 (6 个模板导入)
+- [x] 前后端联调测试通过
