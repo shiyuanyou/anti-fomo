@@ -15,10 +15,10 @@ help:
 	@echo "  make clean      - Remove all containers and volumes"
 
 build:
-	docker-compose build
+	docker compose build
 
 up:
-	docker-compose up -d
+	docker compose up -d
 	@echo ""
 	@echo "Services started:"
 	@echo "  - API:  http://localhost:8000"
@@ -26,20 +26,20 @@ up:
 	@echo "  - Docs: http://localhost:8000/docs"
 
 down:
-	docker-compose down
+	docker compose down
 
 restart:
-	docker-compose restart
+	docker compose restart
 
 logs:
-	docker-compose logs -f
+	docker compose logs -f
 
 logs-api:
-	docker-compose logs -f api
+	docker compose logs -f api
 
 logs-web:
-	docker-compose logs -f web
+	docker compose logs -f web
 
 clean:
-	docker-compose down -v
+	docker compose down -v
 	@echo "All containers and volumes removed"

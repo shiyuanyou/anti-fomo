@@ -17,7 +17,9 @@ services:
       - ./base_datas:/app/base_datas
       # Config files
       - ./config.yaml:/app/config.yaml:ro
-      - ./config.asset.yaml:/app/config.asset.yaml:rw
+      # Scripts and templates for one-time initialization
+      - ./scripts:/app/scripts:ro
+      - ./web:/app/web:ro
     environment:
       - DATABASE_URL=sqlite:///data/anti-fomo.db
     restart: unless-stopped

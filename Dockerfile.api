@@ -17,7 +17,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY api/ ./api/
 COPY config.example.yaml ./config.example.yaml
 COPY config.yaml ./config.yaml
-COPY config.asset.yaml ./config.asset.yaml  # may not exist
+
+# Create config.asset.yaml if not exists (required for local mode)
+RUN if [ ! -f config.asset.yaml ]; then echo "portfolio: {}" > config.asset.yaml; fi
 
 # Create data directories
 RUN mkdir -p /app/data /app/logs /app/cache /app/base_datas
