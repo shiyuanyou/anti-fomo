@@ -13,7 +13,7 @@ services:
       - DATABASE_URL=sqlite:///data/bff/anti-fomo-bff.db
       - BACKEND_GRPC_ADDR=backend:50051
     volumes:
-      - ./configs:/app/configs:ro
+      - ./configs:/app/configs
       - ./data/bff:/app/data
       - ./scripts:/app/scripts:ro
       - ./web/public:/app/web/public:ro
