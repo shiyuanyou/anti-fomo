@@ -216,3 +216,26 @@ if "holdings" in config.portfolio:
 ```
 
 **发现方式:** 代码审查 + 前端调试验证
+
+#### 添加 Docker 支持
+
+**文件:**
+- `Dockerfile.api` - 后端容器
+- `Dockerfile.web` - 前端容器 (多阶段构建)
+- `docker/docker-compose.yml` - 服务编排
+- `docker/nginx.conf` - 前端反向代理配置
+- `Makefile` - Docker 命令快捷方式
+
+**使用方式:**
+```bash
+# 启动所有服务
+docker-compose up -d
+
+# 或使用 Makefile
+make up
+```
+
+**注意事项:**
+- 前端默认构建 local 模式 (VITE_APP_MODE=local)
+- 需要挂载 config.asset.yaml 才能保存配置
+- 数据库文件持久化在 data/ 目录

@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  # Backend API
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: anti-fomo-api
+    ports:
+      - "8000:8000"
+    volumes:
+      # Persist data
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./cache:/app/cache
+      - ./base_datas:/app/base_datas
+      # Config files
+      - ./config.yaml:/app/config.yaml:ro
+      - ./config.asset.yaml:/app/config.asset.yaml:rw
+    environment:
+      - DATABASE_URL=sqlite:///data/anti-fomo.db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - anti-fomo-network
+
+  # Frontend Web
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+      args:
+        - VITE_APP_MODE=local
+    container_name: anti-fomo-web
+    ports:
+      - "3000:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - anti-fomo-network
+
+networks:
+  anti-fomo-network:
+    driver: bridge

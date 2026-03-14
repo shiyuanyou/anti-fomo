@@ -344,7 +344,53 @@ interface AllocationItem {
 
 ---
 
-## 变更日志
+## 附录: Docker 部署
+
+### 快速启动
+
+```bash
+# 构建并启动所有服务
+docker-compose up -d
+
+# 查看服务状态
+docker-compose ps
+```
+
+### 服务地址
+
+| 服务 | 地址 |
+|-----|------|
+| Web 前端 | http://localhost:3000 |
+| API 后端 | http://localhost:8000 |
+| API 文档 | http://localhost:8000/docs |
+
+### 常用命令
+
+```bash
+# 查看日志
+docker-compose logs -f
+
+# 重启服务
+docker-compose restart
+
+# 停止服务
+docker-compose down
+```
+
+或使用 Makefile:
+
+```bash
+make up      # 启动
+make down    # 停止
+make logs    # 查看日志
+make clean   # 清理
+```
+
+### 环境变量
+
+| 变量 | 默认值 | 说明 |
+|-----|--------|------|
+| `DATABASE_URL` | `sqlite:///data/anti-fomo.db` | 数据库连接 |
 
 | 日期 | 变更 |
 |-----|------|
