@@ -181,3 +181,9 @@ There is **no separate test command** for the frontend; use the Vite build (`bui
 - Migration/init scripts go in `scripts/`. They are one-shot utilities, not part of the regular server.
 - FastAPI auto-generates docs at `http://localhost:8000/docs` (Swagger) and `/redoc` (ReDoc).
 - Commit messages: lowercase imperative, no emoji, no period. Example: `fix template copy missing region field`
+
+---
+
+## 6. Error Logging
+
+当 build 或 plan 模式遇到被拒绝的要求或执行错误时，需记录以避免重复犯错。记录应简洁精准，避免 token 浪费。
